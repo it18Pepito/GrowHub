@@ -47,6 +47,7 @@
               <div class="ethics-item-content">
                 <div class="ethics-item-top">
                   <span class="ethics-item-title">{{ item.title }}</span>
+                  <span class="ethics-point-pill">-{{ item.point_deduction || 1 }} Pts</span>
                 </div>
                 <p class="ethics-item-desc">{{ item.description }}</p>
               </div>

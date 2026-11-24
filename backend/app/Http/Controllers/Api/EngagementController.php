@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\Content;
 use App\Models\EthicsPolicy;
 use App\Models\Like;
+use App\Models\MailSetting;
 use App\Models\Save;
 use App\Models\Share;
 use App\Services\GamificationService;
@@ -219,6 +220,7 @@ class EngagementController extends Controller
         if ($isAdminModeration && $policy && $commentOwner && ! empty($commentOwner->email)) {
             $freshOwner = $commentOwner->fresh();
             try {
+                MailSetting::current()->applyRuntimeConfig();
                 Mail::to($freshOwner->email)->send(new CommentViolationMail(
                     user: $freshOwner,
                     policy: $policy,

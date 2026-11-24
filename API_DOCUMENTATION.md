@@ -19,7 +19,12 @@ Dokumen ini berisi spesifikasi teknis lengkap dari seluruh endpoint RESTful API 
 11. [Portal Reviewer (`/api/review`)](#11-portal-reviewer-apireview)
 12. [Admin Console - Manajemen User (`/api/admin/users`)](#12-admin-console---manajemen-user-apiadminusers)
 13. [Admin Console - Pengaturan Poin Gamifikasi (`/api/admin/point-rules`)](#13-admin-console---pengaturan-poin-gamifikasi-apiadminpoint-rules)
-14. [Tabel Kode Respons HTTP](#14-tabel-kode-respons-http)
+14. [Admin Console - Pengaturan Jenjang Level (`/api/admin/level-rules`)](#14-admin-console---pengaturan-jenjang-level-apiadminlevel-rules)
+15. [Admin Console - Pengaturan Batas Ranking & Reset (`/api/admin/rank-settings`)](#15-admin-console---pengaturan-batas-ranking--reset-apiadminrank-settings)
+16. [Kebijakan Etika & Moderasi (`/api/ethics-policies`, `/api/admin/policy-configs`)](#16-kebijakan-etika--moderasi-apiethics-policies-apiadminpolicy-configs)
+17. [Kontak Helper & Support Layanan Karyawan (`/api/support/helpers`, `/api/admin/helper-contacts`)](#17-kontak-helper--support-layanan-karyawan-apisupporthelpers-apiadminhelper-contacts)
+18. [Admin Console - Pengaturan Email & Server SMTP (`/api/admin/mail-settings`)](#18-admin-console---pengaturan-email--server-smtp-apiadminmail-settings)
+19. [Tabel Kode Respons HTTP](#19-tabel-kode-respons-http)
 
 ---
 
@@ -51,7 +56,7 @@ Authorization: Bearer <token_sanctum_anda>
 ### 2.1 Login Pengguna
 Masuk ke dalam sistem menggunakan 9–10 digit NIP dan password.
 - **URL**: `POST /api/auth/login`
-- **Akses**: `Public` (Rate limit: 10 request per menit)
+- **Akses**: `Public` (Rate limit: 30 request per menit / `throttle:30,1`)
 - **Request Body** (`application/json`):
   | Parameter | Tipe Data | Wajib | Keterangan |
   | :--- | :--- | :--- | :--- |
@@ -129,19 +134,41 @@ Mengambil identitas user, poin terkini, status streak, serta hak akses reviewer 
 
 ---
 
-### 2.3 Wajib Ganti Password Pertama Kali (`First-Time Password Change`)
-Digunakan oleh pengguna baru yang baru login pertama kali (atau akun yang baru direset passwordnya oleh Admin) untuk menyetel password baru minimal 8 karakter.
-- **URL**: `POST /api/auth/first-change-password`
-- **Akses**: `Authenticated`
-- **Request Body** (`application/json`):
-  | Parameter | Tipe Data | Wajib | Keterangan |
-  | :--- | :--- | :--- | :--- |
-  | `password` | string | Ya | Password baru minimal 8 karakter. Tidak boleh sama dengan NIP. |
-  | `password_confirmation` | string | Ya | Konfirmasi password baru (harus sama persis). |
+### 2.3 Alur OTP Email & Wajib Ganti Password Pertama Kali (`First-Time Password Change`)
+Sebelum menyetel password baru pada login pertama atau pasca-reset admin (`must_change_password = true`), pengguna wajib memverifikasi kode OTP 6 digit yang dikirim ke email terdaftarnya:
 
-- **Contoh Request Body**:
+1. **Kirim OTP Email**: `POST /api/auth/change-password/send-otp` *(Authenticated, Rate limit: `throttle:10,1`, cooldown kirim ulang 60 detik, masa berlaku 1 menit)*
+   - **Response Sukses (`200 OK`)**:
+     ```json
+     {
+       "message": "Kode OTP telah dikirim ke email terdaftar Anda.",
+       "masked_email": "bu***@growhub.co.id",
+       "expires_in": 60,
+       "resend_cooldown": 60
+     }
+     ```
+2. **Verifikasi OTP Email**: `POST /api/auth/change-password/verify-otp` *(Authenticated, Rate limit: `throttle:15,1`, maks. 5 percobaan salah)*
+   - **Request Body**: `{ "otp": "123456" }`
+   - **Response Sukses (`200 OK`)**:
+     ```json
+     {
+       "message": "Kode OTP berhasil diverifikasi. Silakan buat password baru Anda.",
+       "otp_verification_token": "8x9AbCdEf...random64charToken..."
+     }
+     ```
+3. **Simpan Password Baru**: `POST /api/auth/first-change-password`
+   - **Akses**: `Authenticated`
+   - **Request Body** (`application/json`):
+     | Parameter | Tipe Data | Wajib | Keterangan |
+     | :--- | :--- | :--- | :--- |
+     | `otp_verification_token` | string | Ya | Token hasil verifikasi OTP dari langkah sebelumnya. |
+     | `password` | string | Ya | Password baru minimal 8 karakter. Tidak boleh sama dengan NIP. |
+     | `password_confirmation` | string | Ya | Konfirmasi password baru (harus sama persis). |
+
+- **Contoh Request Body (`POST /api/auth/first-change-password`)**:
   ```json
   {
+    "otp_verification_token": "8x9AbCdEf...random64charToken...",
     "password": "PasswordBaruKaryawan#2026",
     "password_confirmation": "PasswordBaruKaryawan#2026"
   }
@@ -185,7 +212,7 @@ Mencabut token bearer aktif dari database personal access token.
 ## 3. Beranda, Dashboard & Gamifikasi
 
 ### 3.1 Ringkasan Halaman Beranda (`Home Overview`)
-Mengambil konten trending 30 hari terakhir, feed terbaru, juara mingguan (top 5 leaderboard), kategori konten, dan materi kursus rekomendasi.
+Mengambil konten trending, feed terbaru, maks. 3 konten yang terakhir dilihat (`recently_viewed`), juara mingguan (`top_weekly` sesuai batas `home_widget_limit`), kategori konten, dan materi kursus rekomendasi.
 - **URL**: `GET /api/home`
 - **Akses**: `Authenticated`
 - **Response Sukses (`200 OK`)**:
@@ -200,8 +227,11 @@ Mengambil konten trending 30 hari terakhir, feed terbaru, juara mingguan (top 5 
     "my_rank": 3,
     "trending": [...],
     "latest": [...],
+    "recently_viewed": [
+      { "id": 12, "title": "Tips Visual Display Rak", "viewed_at": "2026-11-12T08:30:00+00:00" }
+    ],
     "top_weekly": [
-      { "id": 5, "name": "Budi Store Crew", "points_period": 85, "avatar": null }
+      { "id": 5, "name": "Budi Store Crew", "score": 85, "avatar": null }
     ],
     "categories": [...],
     "courses": [...]
@@ -211,7 +241,7 @@ Mengambil konten trending 30 hari terakhir, feed terbaru, juara mingguan (top 5 
 ---
 
 ### 3.2 Dashboard Pribadi Karyawan (`My Dashboard`)
-Menampilkan statistik pencapaian pribadi karyawan: streak saat ini, riwayat ledger perolehan poin terbaru, karya yang menunggu review, dan ringkasan aktivitas.
+Menampilkan statistik pencapaian pribadi karyawan: peringkat global & departemen, grafik poin 30 hari, kalender aktivitas 12 minggu, rincian perolehan per aksi, lencana capaian (*badges*), dan riwayat mutasi poin terbaru.
 - **URL**: `GET /api/dashboard`
 - **Akses**: `Authenticated`
 - **Response Sukses (`200 OK`)**:
@@ -222,16 +252,21 @@ Menampilkan statistik pencapaian pribadi karyawan: streak saat ini, riwayat ledg
       "name": "Budi",
       "points": 340,
       "current_streak": 6,
-      "level": "Sapling"
+      "longest_streak": 12,
+      "level_info": { "level": 3, "name": "Sapling", "next_level": "Grower", "points_to_next": 160, "progress": 60 }
     },
-    "level_info": {
-      "name": "Sapling",
-      "current_points": 340,
-      "next_level": "Grower",
-      "points_to_next": 160,
-      "progress_percent": 60
-    },
-    "point_history": [
+    "rank": 12,
+    "department_rank": 3,
+    "points_this_week": 45,
+    "points_this_month": 180,
+    "content_counts": { "draft": 1, "pending": 0, "published": 4, "rejected": 0 },
+    "engagement": { "likes": 32, "comments": 14, "views": 240, "shares": 8, "saves": 19 },
+    "chart": [{ "date": "2026-11-12", "points": 25 }],
+    "activity": { "2026-11-12": 3 },
+    "breakdown": { "content_published": 100, "daily_login": 24 },
+    "badges": [{ "key": "first_post", "name": "First Seed", "earned": true, "progress": 1, "target": 1 }],
+    "courses_completed": 2,
+    "recent_points": [
       {
         "id": 142,
         "points": 25,
@@ -246,32 +281,44 @@ Menampilkan statistik pencapaian pribadi karyawan: streak saat ini, riwayat ledg
 ---
 
 ### 3.3 Leaderboard Gamifikasi
-Peringkat klasemen karyawan berdasarkan perolehan poin.
+Peringkat klasemen karyawan berdasarkan perolehan poin, mengikuti batas kuota dan siklus reset yang dikonfigurasi pada *Rank Settings*.
 - **URL**: `GET /api/leaderboard`
 - **Akses**: `Authenticated`
 - **Query Parameter**:
   | Parameter | Tipe Data | Pilihan Nilai | Keterangan |
   | :--- | :--- | :--- | :--- |
-  | `period` | string | `all_time`, `month`, `week` | Periode waktu akumulasi poin (default: `all_time`). |
+  | `period` | string | `all`, `month`, `week` | Periode waktu akumulasi poin (default: `all`). |
   | `department` | string | - | Filter nama departemen karyawan. |
-  | `limit` | integer | 1–100 | Jumlah data teratas (default: 20). |
 
 - **Response Sukses (`200 OK`)**:
   ```json
   {
+    "period": "all",
     "leaders": [
       {
         "id": 2,
         "name": "Siti Nurhaliza",
-        "nip": "1000000002",
         "department": "Store Operations",
+        "position": "Category Specialist",
         "points": 1820,
-        "level": "Mentor",
+        "score": 1820,
+        "current_streak": 14,
         "rank": 1
       }
     ],
-    "departments": ["Store Operations", "Visual Merchandising", "IT Operations"],
-    "my_rank": 4
+    "top_limit": 50,
+    "settings": {
+      "leaderboard_limit": 50,
+      "show_podium": true,
+      "show_my_rank_outside": true,
+      "reset_frequency": "never",
+      "reset_frequency_label": "Sepanjang Waktu (Tanpa Reset)",
+      "last_reset_at": null,
+      "next_reset_at": null,
+      "start_date": null
+    },
+    "me": { "id": 5, "name": "Andi Saputra", "rank": 12, "score": 340 },
+    "departments": ["Store Operations", "Merchandising", "IT"]
   }
   ```
 
@@ -442,9 +489,10 @@ Mengunggah artikel baru lengkap dengan lampiran multi-file (gambar, video, PDF).
 
 ---
 
-### 4.7 Kontribusi Saya (`My Contents`) & Materi Tersimpan (`Saved`)
+### 4.7 Kontribusi Saya (`My Contents`), Tersimpan (`Saved`) & Riwayat Baca (`History Content`)
 - `GET /api/my/contents` : Mengambil seluruh artikel yang pernah dibuat user (Draft, Pending, Published, Rejected).
 - `GET /api/my/saved` : Mengambil daftar artikel yang di-bookmark oleh user.
+- `GET /api/my/history` : Mengambil daftar artikel berstatus `published` yang pernah dibuka user, diurutkan dari yang terakhir dibuka (`last_viewed_at`). Mendukung query parameter `category` (slug), `q` (pencarian judul/isi/tag), dan `per_page` (default: 12).
 
 ---
 
@@ -506,6 +554,23 @@ Mencatat statistik pembagian materi ke WhatsApp, Email, atau salin tautan dan me
   }
   ```
 - **Hapus Komentar**: `DELETE /api/comments/{id}` *(Hanya pemilik komentar atau Admin)*
+  - Apabila **Administrator** menghapus komentar milik pengguna lain (`$comment->user_id !== $user->id`), body wajib menyertakan alasan pelanggaran dari daftar kebijakan aktif:
+    ```json
+    {
+      "ethics_policy_id": 2
+    }
+    ```
+  - Sistem akan menghapus komentar beserta balasannya, mengurangi poin pemilik komentar sebesar `point_deduction`, membuat notifikasi in-app (`policy_violation`), serta mengirim email pemberitahuan pelanggaran.
+  - **Contoh Response Moderasi Admin (`200 OK`)**:
+    ```json
+    {
+      "message": "Komentar dihapus, poin Andi Saputra dikurangi 1 Pts, dan email pemberitahuan telah dikirim.",
+      "comments_count": 4,
+      "points_deducted": 1,
+      "email_sent": true,
+      "violation_reason": "Konten SARA, Ujaran Kebencian & Pelecehan"
+    }
+    ```
 
 ---
 
@@ -535,13 +600,25 @@ Mencatat statistik pembagian materi ke WhatsApp, Email, atau salin tautan dan me
 - **URL**: `GET /api/communities/{slug}`
 - **Akses**: `Authenticated`
 
-### 6.3 Gabung / Keluar Komunitas (`Join/Leave`)
+### 6.3 Buat Komunitas Baru
+- **URL**: `POST /api/communities`
+- **Akses**: `Authenticated`
+- **Request Body** (`application/json`):
+  | Parameter | Tipe Data | Wajib | Keterangan |
+  | :--- | :--- | :--- | :--- |
+  | `name` | string | Ya | Nama komunitas (unik, maks. 80 karakter). |
+  | `description` | string | Tidak | Deskripsi singkat komunitas (maks. 500 karakter). |
+  | `icon` | string | Tidak | Nama ikon Lucide (default: `Users`, maks. 40 karakter). |
+  | `color` | string | Tidak | Kode warna HEX (default: `#1e8c45`, maks. 20 karakter). |
+- **Response Sukses (`201 Created`)**: Mengembalikan objek komunitas baru beserta pembuat otomatis bergabung sebagai admin komunitas.
+
+### 6.4 Gabung / Keluar Komunitas (`Join/Leave`)
 - **URL**: `POST /api/communities/{id}/join`
 - **Akses**: `Authenticated`
 - **Response Sukses (`200 OK`)**:
   ```json
   {
-    "joined": true,
+    "is_member": true,
     "members_count": 49
   }
   ```
@@ -577,7 +654,14 @@ Mencatat statistik pembagian materi ke WhatsApp, Email, atau salin tautan dan me
 
 ---
 
-### 7.2 Selesaikan Kursus & Klaim Poin Reward
+### 7.2 Detail Modul Kursus
+- **URL**: `GET /api/courses/{slug}`
+- **Akses**: `Authenticated`
+- **Response Sukses (`200 OK`)**: Mengembalikan detail lengkap materi kursus termasuk `body`, `video_url`, `completions_count`, `is_completed`, dan `points_reward` (mengikuti status aktif aturan `course_completed`).
+
+---
+
+### 7.3 Selesaikan Kursus & Klaim Poin Reward
 Menandai kelulusan modul pembelajaran mandiri dan mentransfer poin reward secara instan.
 - **URL**: `POST /api/courses/{id}/complete`
 - **Akses**: `Authenticated`
@@ -612,8 +696,17 @@ Menandai kelulusan modul pembelajaran mandiri dan mentransfer poin reward secara
 - **URL**: `PUT /api/profile`
 - **Akses**: `Authenticated`
 - **Request Body**:
+  | Parameter | Tipe Data | Wajib | Keterangan |
+  | :--- | :--- | :--- | :--- |
+  | `name` | string | Ya | Nama lengkap karyawan (maks. 120 karakter). |
+  | `email` | string (email) | Ya | Alamat email aktif & unik (maks. 150 karakter, wajib untuk pengiriman OTP). |
+  | `bio` | string | Tidak | Bio singkat (maks. 300 karakter). |
+  | `location` | string | Tidak | Lokasi cabang/kantor (maks. 100 karakter). |
   ```json
   {
+    "name": "Budi Store Crew",
+    "email": "budi.crew@growhub.co.id",
+    "location": "Bandung",
     "bio": "Store Crew Cabang Bandung - Passionate in customer experience."
   }
   ```
@@ -622,7 +715,21 @@ Menandai kelulusan modul pembelajaran mandiri dan mentransfer poin reward secara
 - **URL**: `POST /api/profile/avatar`
 - **Akses**: `Authenticated`
 - **Content-Type**: `multipart/form-data`
-- **Form Data**: `avatar` (File gambar JPG/PNG maks. 2MB).
+- **Form Data**: `avatar` (File gambar `image`, ukuran maks. **3 MB** / `3072` KB).
+
+### 9.4 Ubah Password di Profil (Verifikasi OTP Email)
+Tersedia khusus untuk pengguna dengan role `admin` atau user berstatus `must_change_password = true` (karyawan reguler diblokir dengan `403 Forbidden`):
+1. **Kirim OTP Email**: `POST /api/profile/password/send-otp` *(Rate limit: `throttle:10,1`)*
+2. **Verifikasi OTP Email**: `POST /api/profile/password/verify-otp` *(Rate limit: `throttle:15,1`, body: `{ "otp": "123456" }`, mengembalikan `otp_verification_token`)*
+3. **Update Password**: `PUT /api/profile/password`
+   ```json
+   {
+     "otp_verification_token": "8x9AbCdEf...random64charToken...",
+     "current_password": "PasswordLama#2026",
+     "password": "PasswordBaruAdmin#2026",
+     "password_confirmation": "PasswordBaruAdmin#2026"
+   }
+   ```
 
 ---
 
@@ -1005,15 +1112,212 @@ Mengaktifkan kembali seluruh aturan sistem poin (mengubah `is_active = true` unt
 
 ---
 
-## 14. Tabel Kode Respons HTTP
+## 14. Admin Console - Pengaturan Jenjang Level (`/api/admin/level-rules`)
+*Akses: Khusus Role `admin`*
+
+### 14.1 Daftar Aturan Level & Distribusi Karyawan
+- **URL**: `GET /api/admin/level-rules`
+- **Response Sukses (`200 OK`)**: Mengembalikan `levels` (beserta `user_count` aktif per tier) dan `stats` (`total_levels`, `active_levels`, `inactive_levels`, `max_points`, `total_users`).
+
+### 14.2 Tambah, Edit, Toggle & Hapus Tier Level
+- **Tambah Tier Baru**: `POST /api/admin/level-rules` (`201 Created`)
+- **Update Tier Tunggal**: `PUT /api/admin/level-rules/{levelRule}`
+- **Toggle Aktif/Nonaktif**: `POST /api/admin/level-rules/{levelRule}/toggle`
+- **Simpan Perubahan Massal**: `PUT /api/admin/level-rules/batch` (body: `{ "levels": [{ "id": 1, "level": 1, "name": "Seedling", "min_points": 0, ... }] }`)
+- **Reset ke 8 Level Default**: `POST /api/admin/level-rules/reset-defaults`
+- **Hapus Tier**: `DELETE /api/admin/level-rules/{levelRule}`
+- **Parameter Validasi (`POST` / `PUT`)**: `level` (int 1–100), `name` (string max 100), `min_points` (int 0–1000000), `description` (nullable max 500), `badge_icon` (nullable max 50), `badge_color` (nullable max 50), `is_active` (boolean).
+
+---
+
+## 15. Admin Console - Pengaturan Batas Ranking & Reset (`/api/admin/rank-settings`)
+*Akses: Khusus Role `admin`*
+
+### 15.1 Ambil Pengaturan Ranking & Simulasi Preview
+- **URL**: `GET /api/admin/rank-settings`
+- **Response Sukses (`200 OK`)**: Mengembalikan `settings`, `stats` (`current_leaderboard_limit`, `current_home_limit`, `show_podium`, `show_my_rank_outside`, `reset_frequency`, `reset_frequency_label`, `last_reset_at`, `next_reset_at`, `leaderboard_start_date`, `total_active_employees`, `total_employees_with_points`), serta `preview_leaders`.
+
+### 15.2 Simpan Pengaturan Ranking & Jadwal Reset
+- **URL**: `PUT /api/admin/rank-settings`
+- **Request Body** (`application/json`):
+  | Parameter | Tipe Data | Wajib | Validasi & Keterangan |
+  | :--- | :--- | :--- | :--- |
+  | `leaderboard_limit` | integer | Ya | Rentang `3` – `500` (batas tampil tabel Leaderboard). |
+  | `home_widget_limit` | integer | Ya | Rentang `1` – `20` (batas widget *Top Weekly* di Home). |
+  | `show_podium` | boolean | Ya | Tampilkan visual panggung podium Top 3. |
+  | `show_my_rank_outside` | boolean | Ya | Tampilkan peringkat aktual di sticky footer bila di luar kuota Top X. |
+  | `reset_frequency` | string | Tidak | Salah satu dari: `never`, `weekly`, `monthly`, `quarterly`, `yearly`. |
+
+### 15.3 Reset Manual & Reset ke Default
+- **Reset Leaderboard Sekarang**: `POST /api/admin/rank-settings/manual-reset` *(Memulai perhitungan periode leaderboard dari timestamp saat ini)*
+- **Batalkan Reset Manual**: `POST /api/admin/rank-settings/clear-manual-reset`
+- **Kembalikan Default**: `POST /api/admin/rank-settings/reset-defaults`
+
+---
+
+## 16. Kebijakan Etika & Moderasi (`/api/ethics-policies`, `/api/admin/policy-configs`)
+
+### 16.1 Ambil Daftar Kebijakan Etika Aktif (User Modal & Moderasi)
+- **URL**: `GET /api/ethics-policies`
+- **Akses**: `Authenticated` (`auth:sanctum`)
+- **Response Sukses (`200 OK`)**: Mengembalikan `{ "policies": [ ... ] }` diurutkan berdasarkan `sort_order`.
+
+### 16.2 Manajemen Policy & Validation Config (Admin Only)
+*Akses: Khusus Role `admin`*
+- **Daftar & Statistik**: `GET /api/admin/policy-configs` *(Mengembalikan daftar `policies` dan `stats: { total_policies, min_deduction, max_deduction, avg_deduction, deduction_range }`)*
+- **Tambah Aturan Baru**: `POST /api/admin/policy-configs` (`201 Created`, body: `title` max 160, `description` max 1000, `point_deduction` integer min 1, `severity` string low|medium|high, `sort_order` nullable 0–1000)
+- **Update Aturan Tunggal**: `PUT /api/admin/policy-configs/{ethicsPolicy}`
+- **Simpan Perubahan Massal**: `PUT /api/admin/policy-configs/batch` *(Body: `{ "policies": [{ "id": 1, "title": "...", "description": "...", "point_deduction": 5, "severity": "high", "sort_order": 1 }] }`)*
+- **Hapus Aturan**: `DELETE /api/admin/policy-configs/{ethicsPolicy}` *(Mengembalikan `422` jika hanya tersisa 1 aturan di sistem)*
+
+---
+
+## 17. Kontak Helper & Support Layanan Karyawan (`/api/support/helpers`, `/api/admin/helper-contacts`)
+
+### 17.1 Ambil Daftar Kontak Helper Aktif (Guest & Authenticated)
+- **URL**: `GET /api/support/helpers` (Alias: `GET /api/helper-contacts`)
+- **Akses**: `Public` (dapat diakses tanpa login pada Halaman Login, serta dapat diakses oleh user terautentikasi pada Halaman Help & Support)
+- **Response Sukses (`200 OK`)**:
+  ```json
+  {
+    "helpers": [
+      {
+        "id": 1,
+        "name": "IT Helpdesk & System Support",
+        "role_or_title": "Administrator Sistem GrowHub",
+        "channel": "whatsapp",
+        "contact_value": "+62 812-8899-7700",
+        "available_hours": "Senin - Jumat, 08:00 - 17:00 WIB",
+        "description": "Bantuan kendala login NIP, lupa password, reset akun, dan error teknis GrowHub.",
+        "is_active": true,
+        "sort_order": 1
+      }
+    ]
+  }
+  ```
+
+### 17.2 Manajemen Kontak Helper (Admin Only)
+*Akses: Khusus Role `admin` (`auth:sanctum`)*
+- **Daftar & Statistik Kontak**: `GET /api/admin/helper-contacts` *(Mengembalikan seluruh kontak aktif & nonaktif beserta metrik `total_helpers`, `active_helpers`, `inactive_helpers`)*
+- **Tambah Kontak Helper Baru**: `POST /api/admin/helper-contacts`
+  - Body: `name` (string max 120, wajib), `role_or_title` (string nullable max 120), `channel` (string wajib: `whatsapp|email|phone|telegram|other`), `contact_value` (string max 160, wajib), `available_hours` (string nullable max 120), `description` (string nullable max 1000), `is_active` (boolean, opsional default true), `sort_order` (integer opsional 0–1000).
+- **Update Kontak Helper**: `PUT /api/admin/helper-contacts/{helperContact}`
+- **Toggle Status Aktif/Nonaktif**: `POST /api/admin/helper-contacts/{helperContact}/toggle`
+- **Hapus Kontak Helper**: `DELETE /api/admin/helper-contacts/{helperContact}`
+- **Reset ke Kontak Bawaan Default**: `POST /api/admin/helper-contacts/reset-defaults`
+
+---
+
+## 18. Admin Console - Pengaturan Email & Server SMTP (`/api/admin/mail-settings`)
+*Akses: Khusus Role `admin` (`auth:sanctum`)*
+
+Modul ini memungkinkan Administrator untuk melihat konfigurasi runtime dan file `.env`, memperbarui kredensial SMTP server secara dinamis (yang otomatis disimpan ke database `mail_settings` dan file `backend/.env`), serta melakukan pengujian kirim email (*SMTP test connection*).
+
+### 18.1 Ambil Konfigurasi Email & Snapshot .env
+- **URL**: `GET /api/admin/mail-settings`
+- **Response Sukses (`200 OK`)**:
+  ```json
+  {
+    "setting": {
+      "mail_mailer": "smtp",
+      "mail_scheme": "smtps",
+      "mail_host": "smtp-1.rcoid.com",
+      "mail_port": 465,
+      "mail_username": "noreply.pepito@rcoid.com",
+      "has_password": true,
+      "mail_from_address": "noreply.pepito@rcoid.com",
+      "mail_from_name": "GrowHub- ${APP_NAME}",
+      "updated_at": "2026-11-24T17:50:00+08:00",
+      "updated_by_name": "Super Admin"
+    },
+    "env_snapshot": {
+      "MAIL_MAILER": "smtp",
+      "MAIL_SCHEME": "smtps",
+      "MAIL_HOST": "smtp-1.rcoid.com",
+      "MAIL_PORT": 465,
+      "MAIL_USERNAME": "noreply.pepito@rcoid.com",
+      "MAIL_FROM_ADDRESS": "noreply.pepito@rcoid.com",
+      "MAIL_FROM_NAME": "GrowHub- ${APP_NAME}"
+    }
+  }
+  ```
+
+### 18.2 Simpan & Perbarui Konfigurasi SMTP
+Menyimpan konfigurasi baru ke database `mail_settings`, memperbarui baris `MAIL_*` pada file `backend/.env`, menyinkronkan runtime config di memori Laravel, serta membersihkan cache konfigurasi (`Artisan config:clear`).
+- **URL**: `PUT /api/admin/mail-settings`
+- **Request Body** (`application/json`):
+  | Parameter | Tipe Data | Wajib | Keterangan |
+  | :--- | :--- | :--- | :--- |
+  | `mail_mailer` | string | Ya | Pilihan: `smtp`, `sendmail`, `log`, `array`. Default: `smtp`. |
+  | `mail_scheme` | string | Tidak | Pilihan: `smtps`, `smtp`, `tls`, `ssl`, atau kosongkan. |
+  | `mail_host` | string | Ya | Host server SMTP (maks. 190 karakter, misal: `smtp-1.rcoid.com`). |
+  | `mail_port` | integer | Ya | Port server SMTP (1–65535, misal: `465` untuk SSL/SMTPS atau `587` untuk TLS). |
+  | `mail_username` | string | Tidak | Username autentikasi akun email server (maks. 190 karakter). |
+  | `mail_password` | string | Tidak | Password SMTP baru. **Kosongkan jika ingin mempertahankan password yang sudah ada**. |
+  | `mail_from_address` | string | Ya | Alamat email resmi pengirim notifikasi sistem (format email valid). |
+  | `mail_from_name` | string | Ya | Nama pengirim yang tampil di inbox penerima (misal: `GrowHub- ${APP_NAME}`). |
+
+- **Response Sukses (`200 OK`)**:
+  ```json
+  {
+    "message": "Konfigurasi SMTP berhasil disimpan dan file .env telah diperbarui.",
+    "env_updated": true,
+    "setting": {
+      "mail_mailer": "smtp",
+      "mail_scheme": "smtps",
+      "mail_host": "smtp-1.rcoid.com",
+      "mail_port": 465,
+      "mail_username": "noreply.pepito@rcoid.com",
+      "has_password": true,
+      "mail_from_address": "noreply.pepito@rcoid.com",
+      "mail_from_name": "GrowHub- ${APP_NAME}",
+      "updated_at": "2026-11-24T17:55:00+08:00",
+      "updated_by_name": "Super Admin"
+    }
+  }
+  ```
+
+### 18.3 Uji Coba Pengiriman Email (SMTP Test)
+Mengirim email pengujian ke alamat tujuan untuk memvalidasi apakah koneksi socket port, hostname, autentikasi SSL/TLS, dan kredensial akun berjalan normal.
+- **URL**: `POST /api/admin/mail-settings/test`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "recipient_email": "admin@rcoid.com"
+  }
+  ```
+- **Response Sukses (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "message": "Email pengujian berhasil dikirim ke admin@rcoid.com!"
+  }
+  ```
+- **Response Gagal Koneksi (`500 Internal Server Error`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Gagal mengirim email pengujian: Connection could not be established with host smtp-1.rcoid.com:465 ..."
+  }
+  ```
+
+---
+
+## 19. Tabel Kode Respons HTTP
 
 | Kode Status | Keterangan | Penjelasan dalam Sistem GrowHub |
 | :--- | :--- | :--- |
 | **`200 OK`** | Berhasil | Request berhasil diproses dan mengembalikan payload data. |
-| **`201 Created`** | Berhasil Dibuat | Data baru (user, konten, komentar, tiket) berhasil dibuat. |
+| **`201 Created`** | Berhasil Dibuat | Data baru (user, konten, komentar, komunitas, level, kebijakan, tiket) berhasil dibuat. |
+| **`400 Bad Request`** | Permintaan Tidak Valid | Format payload atau parameter HTTP tidak valid sebelum pemrosesan validasi bisnis. |
 | **`401 Unauthorized`** | Tidak Terautentikasi | Token Bearer Sanctum hilang, kedaluwarsa, atau tidak valid. |
-| **`403 Forbidden`** | Dilarang | Pengguna tidak memiliki hak akses role (misal non-reviewer mengakses endpoint kurasi). |
-| **`404 Not Found`** | Tidak Ditemukan | ID resource konten, user, atau course tidak ditemukan di database. |
-| **`422 Unprocessable Content`** | Validasi Gagal | Parameter request tidak memenuhi format validasi Laravel (contoh: NIP duplikat, password kurang dari 8 karakter). |
-| **`429 Too Many Requests`** | Terlalu Banyak Request | Terkena limit throttling (contoh: batas login 10x per menit). |
-| **`500 Internal Server Error`** | Kesalahan Server | Terjadi galat internal pada runtime PHP atau query database. |
+| **`403 Forbidden`** | Dilarang | Pengguna tidak memiliki hak akses role (misal non-reviewer mengakses endpoint kurasi, atau user reguler mengakses reset password mandiri). |
+| **`404 Not Found`** | Tidak Ditemukan | ID resource konten, user, level, kebijakan, atau course tidak ditemukan di database. |
+| **`405 Method Not Allowed`** | Metode Tidak Diizinkan | HTTP method tidak didukung endpoint atau terblokir konfigurasi handler web server (misal IIS FastCGI belum mengizinkan `OPTIONS`/`PUT`/`DELETE`). |
+| **`408 Request Timeout`** | Waktu Permintaan Habis | Koneksi ke backend melebihi batas tunggu (timeout). |
+| **`413 Content Too Large`** | Ukuran Berkas Terlalu Besar | Ukuran unggahan berkas melebihi batas maksimal server atau validasi Laravel (maks. 50 MB konten, 3 MB avatar). |
+| **`419 Page Expired / CSRF Mismatch`** | Sesi Kedaluwarsa | Token sesi atau CSRF tidak cocok / kedaluwarsa. |
+| **`422 Unprocessable Content`** | Validasi Gagal | Parameter request tidak memenuhi aturan validasi Laravel (contoh: NIP duplikat, OTP salah/kedaluwarsa, password kurang dari 8 karakter, alasan moderasi belum dipilih). |
+| **`429 Too Many Requests`** | Terlalu Banyak Request | Terkena limit throttling (contoh: login `30/menit`, kirim OTP `10/menit` atau cooldown 60 detik, verifikasi OTP `15/menit`). |
+| **`500 Internal Server Error`** | Kesalahan Server | Terjadi galat internal pada runtime PHP, pengiriman SMTP, atau query database. |
+| **`502 Bad Gateway` / `503 Service Unavailable` / `504 Gateway Timeout`** | Layanan / Gateway Bermasalah | Reverse proxy (IIS/Nginx) gagal menjangkau upstream PHP-FPM/FastCGI atau layanan sedang maintenance/overload. |

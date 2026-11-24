@@ -32,29 +32,36 @@ Sistem GrowHub memiliki modul fungsional terintegrasi yang terbagi berdasarkan h
 1. **Login Berbasis NIP**:
    - Username menggunakan 9–10 digit Nomor Induk Pegawai (NIP).
    - Password awal diset sama dengan NIP untuk kemudahan onboarding frontline.
-2. **Mandatory First-Time Password Change (`must_change_password`)**:
-   - User yang baru login pertama kali (atau akun yang baru direset oleh Admin) otomatis diarahkan ke form pengaturan password baru.
-   - User diblokir dari akses halaman dashboard sebelum berhasil mengatur password barunya.
-   - Password baru wajib minimal 8 karakter dan tidak boleh sama dengan NIP default.
-3. **Kebijakan Reset Password Terpusat (*Centralized Admin Reset*)**:
-   - Karyawan tidak dapat melakukan reset password mandiri di halaman profil untuk mencegah penyalahgunaan akun bersama.
-   - Reset password hanya dapat dipicu oleh Administrator melalui menu User Management. Setelah direset, user dapat login kembali menggunakan password default dan wajib mengganti passwordnya lagi.
-4. **Role-Based Access Control (RBAC)**:
-   - **Employee (Karyawan)**: Mengunggah konten, berdiskusi, belajar di Learning Center, melihat ranking.
+2. **Mandatory First-Time Password Change & Email OTP (`must_change_password`)**:
+   - User yang baru login pertama kali (atau akun yang baru direset oleh Admin) otomatis diarahkan ke alur 2 tahap: **(1) Verifikasi OTP Email 6 digit** (`POST /api/auth/change-password/send-otp` & `verify-otp`) ke alamat email terdaftar (berlaku 1 menit, cooldown kirim ulang 60 detik, maksimal 5 percobaan salah) dan **(2) Pembuatan Password Baru** minimal 8 karakter yang tidak boleh sama dengan NIP default.
+   - User diblokir dari akses halaman dashboard sebelum menyelesaikan verifikasi OTP dan pengaturan password baru.
+3. **Kebijakan Reset Password Terpusat & OTP Profil**:
+   - Karyawan reguler tidak dapat melakukan reset password mandiri di halaman profil maupun di layar login untuk mencegah penyalahgunaan akun bersama.
+   - Reset password hanya dapat dipicu oleh Administrator melalui menu User Management (mengembalikan ke NIP default dan memicu status `must_change_password`). Khusus Administrator (atau akun dalam status wajib ganti password), tersedia pembaruan password di halaman Profil yang tetap diproteksi verifikasi **OTP Email** (`POST /api/profile/password/send-otp`, `verify-otp`, `PUT /api/profile/password`).
+4. **Post-Login Ethics Notice Modal (`EthicsNoticeModal`)**:
+   - Setiap kali login berhasil, frontend memunculkan modal *Pemberitahuan Etika Komunikasi* yang mengambil daftar kebijakan aktif dari `GET /api/ethics-policies` agar karyawan memahami aturan berbagi dan konsekuensi pengurangan poin sebelum beraktivitas.
+5. **Role-Based Access Control (RBAC)**:
+   - **Employee (Karyawan)**: Mengunggah konten, berdiskusi, belajar di Learning Center, memantau riwayat baca (*History Content*), dan melihat ranking.
    - **Reviewer**: Memvalidasi, menyetujui (*approve*), atau menolak (*reject*) antrean konten dengan catatan evaluasi.
-   - **Administrator**: Hak akses penuh mencakup kelola akun user, reset password, hapus akun, kontrol sistem, serta konfigurasi dinamis aturan dan aktivasi saklar sistem poin gamifikasi (*point rules & toggles management*).
+   - **Administrator**: Hak akses penuh mencakup kelola akun user, reset password, hapus akun, moderasi komentar pelanggaran etika, serta konfigurasi dinamis *Point Settings*, *Level Settings*, *Rank Settings*, dan *Policy & Validation Config*.
 
-### 2.2 Knowledge Feed & Pembuatan Konten
+### 2.2 Knowledge Feed, History Content & Pengalaman UI
 1. **Multikategori Konten**:
    - *Best Practice*, *Tips & Trick*, *Lesson Learned*, *Innovation & Ideas*, *Document/SOP*, *Success Story*, *Group Discussion*, dan *Video & Photo Sharing*.
 2. **Editor Konten Interaktif**:
    - Pemilihan kategori dan komunitas tujuan.
-   - Multi-upload lampiran: Gambar (JPG/PNG/WEBP), Video singkat (MP4/WEBM), dan Dokumen SOP (PDF/Word/Excel/PPT) hingga 50 MB per file.
+   - Multi-upload lampiran: Gambar (JPG/PNG/GIF/WEBP), Video singkat (MP4/MOV/WEBM/AVI), dan Dokumen SOP (PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX/TXT/CSV) hingga 50 MB per file (maks. 10 file).
    - Tagging topik untuk pengelompokan yang fleksibel.
-3. **Interaksi Sosial Karyawan**:
+3. **Interaksi Sosial Karyawan & Moderasi Komentar**:
    - **Like & Save**: Memberikan apresiasi atau menyimpan materi ke koleksi pribadi (*Saved Knowledge*).
-   - **Threaded Comments**: Diskusi bertingkat antar-karyawan per materi.
+   - **Threaded Comments & Admin Moderation**: Diskusi bertingkat antar-karyawan per materi. Saat Admin menghapus komentar karyawan lain karena melanggar aturan, Admin wajib memilih alasan pelanggaran (`ethics_policy_id`), dan sistem otomatis mengurangi poin pelanggar serta mengirim notifikasi in-app dan email peringatan (`CommentViolationMail`).
    - **Share Modal**: Berbagi tautan materi langsung ke WhatsApp Web, Email, Slack/Teams, atau salin tautan link.
+4. **History Content & Recently Viewed (`ContentView`)**:
+   - Setiap kali karyawan membuka konten berstatus `published`, backend mencatat/memperbarui timestamp kunjungan di tabel `content_views` (unik per `[user_id, content_id]`).
+   - Halaman **Home** menampilkan maksimal **3 konten terakhir** pada widget *Recently Viewed* lengkap dengan tautan **View More** menuju halaman **History Content** (`/history`, endpoint `GET /api/my/history`) yang mendukung pencarian dan paginasi.
+5. **Konsistensi Layout (*Loading Skeleton*) & Penanganan Error HTTP Terpusat**:
+   - Seluruh halaman utama dan widget (*HomeView*, *DashboardView*, *FeedView*, *HistoryContentView*, *Communities*, *Learning*, *ReviewPortal*, *Admin Consoles*) menerapkan kerangka muat (*loading skeleton*) dengan ukuran terukur agar mencegah pergeseran tata letak (*layout shift*).
+   - Penanganan error jaringan dan HTTP dipusatkan pada `frontend/src/utils/httpError.js` dan interceptor Axios (`frontend/src/api/client.js`) untuk membedakan status HTTP standar (`400`, `401`, `403`, `404`, `405`, `408`, `413`, `419`, `422`, `429`, `500`, `502`, `503`, `504`) dengan kondisi jaringan tidak terhubung (*network error*).
 
 ### 2.3 Reviewer Validation Portal
 1. **Antrean Validasi (Validation Queue)**:
@@ -108,37 +115,55 @@ Sistem GrowHub memiliki modul fungsional terintegrasi yang terbagi berdasarkan h
      - `backend/app/Http/Controllers/Api/EngagementController.php`: Pemicu transaksi poin interaksi sosial: `like_received` (+2 poin), `save_received` (+2 poin), `share_given` (+1 poin), `share_received` (+2 poin), `comment_given` (+1 poin), dan `comment_received` (+3 poin).
      - `backend/app/Http/Controllers/Api/CourseController.php`: Pemicu pemberian poin reward `course_completed` (+15 poin) saat materi pembelajaran tuntas dipelajari.
      - `backend/app/Http/Controllers/Api/AdminUserController.php`: Modul konsol admin untuk penyesuaian atau penambahan bonus poin manual kepada karyawan.
-     - `backend/app/Http/Controllers/Api/AdminRankSettingController.php`: Modul konsol admin untuk mengonfigurasi batas kuota peringkat teratas Leaderboard dan Beranda (`GET /api/admin/rank-settings`, `PUT /api/admin/rank-settings`, `POST /api/admin/rank-settings/reset-defaults`).
-   - **Services & Middleware**:
-     - `backend/app/Services/GamificationService.php`: Mesin (*engine*) utama transaksi poin (`award()`), evaluasi aturan dinamis `PointRule` dari database (memeriksa status aktif dan batas harian `daily_caps`), deteksi kenaikan tingkat (*level-up*) dengan pembuatan notifikasi otomatis, dan kalkulator keaktifan beruntun (*streak tracking* via `recordActivity()`).
-     - `backend/app/Services/LevelService.php`: Logika pemetaan 8-tier level (`forPoints()`), penentuan target level berikutnya, sisa poin menuju kenaikan level (*points to next level*), dan persentase progress bar.
-     - `backend/app/Http/Middleware/EnsureAdmin.php`: Middleware otorisasi khusus memastikan hanya role Administrator yang dapat mengubah aturan poin dan saklar gamifikasi.
+     - `backend/app/Http/Controllers/Api/AdminRankSettingController.php`: Modul konsol admin untuk mengonfigurasi batas kuota peringkat teratas Leaderboard, widget Beranda, dan jadwal/eksekusi reset Leaderboard (`GET /api/admin/rank-settings`, `PUT /api/admin/rank-settings`, `POST /api/admin/rank-settings/reset-defaults`, `manual-reset`, `clear-manual-reset`).
+     - `backend/app/Http/Controllers/Api/AdminLevelRuleController.php`: Modul konsol admin untuk manajemen tingkatan level dinamis (`GET/POST /api/admin/level-rules`, `PUT/DELETE /{levelRule}`, `POST /{levelRule}/toggle`, `PUT /batch`, `POST /reset-defaults`).
+     - `backend/app/Http/Controllers/Api/AdminPolicyConfigController.php`: Modul konsol admin untuk kebijakan etika komunikasi & daftar pelanggaran (`GET/POST /api/admin/policy-configs`, `PUT /batch`, `PUT/DELETE /{ethicsPolicy}`), serta endpoint publik terautentikasi `GET /api/ethics-policies`.
+     - `backend/app/Http/Controllers/Api/AdminHelperContactController.php`: Modul konsol admin untuk kelola kontak helper & saluran bantuan support (`GET/POST/PUT/DELETE /api/admin/helper-contacts`), serta endpoint publik `GET /api/support/helpers`.
+     - `backend/app/Http/Controllers/Api/AdminMailSettingController.php`: Modul konsol admin untuk konfigurasi SMTP & email pengirim (`GET/PUT /api/admin/mail-settings`, `POST /test`), sinkronisasi database `mail_settings`, runtime config, dan file `.env`.
+     - `backend/app/Http/Controllers/Api/ProfileController.php`: Pengelolaan profil diri, unggah avatar (maks. 3 MB), serta alur ganti password ber-OTP untuk Admin/wajib ganti password.
+   - **Services, Mail & Middleware**:
+     - `backend/app/Services/GamificationService.php`: Mesin (*engine*) utama transaksi poin (`award()` & `deduct()`), evaluasi aturan dinamis `PointRule` dari database (memeriksa status aktif dan batas harian `daily_caps`), deteksi kenaikan tingkat (*level-up*) dengan pembuatan notifikasi otomatis, dan kalkulator keaktifan beruntun (*streak tracking* via `recordActivity()`).
+     - `backend/app/Services/LevelService.php`: Logika pemetaan tier level dinamis berbasis tabel `level_rules` (fallback ke `config/gamification.php`), penentuan target level berikutnya, sisa poin menuju kenaikan level, dan persentase progress bar.
+     - `backend/app/Services/PasswordOtpService.php`: Pengelolaan pembuatan OTP 6 digit (`EXPIRES_MINUTES = 1`, `RESEND_COOLDOWN_SECONDS = 60`, `MAX_ATTEMPTS = 5`), validasi kode, dan penerbitan `otp_verification_token` sebelum perubahan password.
+     - `backend/app/Mail/PasswordOtpMail.php`, `backend/app/Mail/CommentViolationMail.php`, & `backend/app/Mail/TestSmtpMail.php`: Pengiriman email OTP verifikasi password, notifikasi pelanggaran etika komentar, serta email pengujian verifikasi koneksi SMTP.
+     - `backend/app/Http/Middleware/EnsureAdmin.php`: Middleware otorisasi khusus memastikan hanya role Administrator yang dapat mengubah aturan poin, level, ranking, kebijakan etika, kontak helper, pengaturan SMTP, dan user.
      - `backend/app/Http/Middleware/TrackActivity.php`: Middleware HTTP untuk memantau aktivitas request pengguna terautentikasi dan memperbarui streak harian secara pasif tanpa perlu login ulang.
-     - `backend/config/gamification.php`: Konfigurasi bawaan sistem (*fallback rules*) untuk bobot poin tiap aksi, aturan kelipatan bonus 7 hari berturut-turut, batasan harian anti-spam, dan ambang batas 8 level progression.
+     - `backend/config/gamification.php` & `backend/config/cors.php`: Konfigurasi fallback gamifikasi dan kebijakan CORS lintas origin (`CORS_ALLOWED_ORIGINS`).
    - **Models**:
      - `backend/app/Models/PointRule.php`: Model aturan dinamis sistem poin (`action`, `name`, `description`, `category`, `points`, `daily_cap`, `is_active`, `sort_order`).
+     - `backend/app/Models/LevelRule.php`: Model tingkatan level dinamis (`level`, `name`, `min_points`, `description`, `badge_icon`, `badge_color`, `is_active`).
      - `backend/app/Models/User.php`: Menyimpan data keaktifan (`points`, `current_streak`, `longest_streak`, `last_activity_date`), method `isAdmin()`, relasi ledger `pointTransactions()`, dan dynamic accessor `level_info`.
-     - `backend/app/Models/PointTransaction.php`: Model pencatatan buku besar (*ledger*) riwayat transaksi perolehan poin dengan relasi polimorfik ke objek sumber (`reference_type`, `reference_id`).
-     - `backend/app/Models/AppNotification.php`: Model notifikasi in-app otomatis saat pengguna naik level (*level_up*) atau mencapai bonus streak 7 hari (*streak*).
-     - `backend/app/Models/RankSetting.php`: Model penyimpanan konfigurasi batas kuota ranking (`leaderboard_limit`, `home_widget_limit`, `show_podium`, `show_my_rank_outside`).
+     - `backend/app/Models/PointTransaction.php`: Model pencatatan buku besar (*ledger*) riwayat transaksi perolehan maupun pengurangan poin dengan relasi polimorfik ke objek sumber (`reference_type`, `reference_id`).
+     - `backend/app/Models/AppNotification.php`: Model notifikasi in-app otomatis saat pengguna naik level (*level_up*), mencapai bonus streak 7 hari (*streak*), atau menerima sanksi `policy_violation`.
+     - `backend/app/Models/RankSetting.php`: Model penyimpanan konfigurasi batas kuota ranking & jadwal reset (`leaderboard_limit`, `home_widget_limit`, `show_podium`, `show_my_rank_outside`, `reset_frequency`, `last_reset_at`).
+     - `backend/app/Models/EthicsPolicy.php`: Model daftar kebijakan etika komunikasi dan bobot pengurangan poin (`title`, `description`, `point_deduction`, `severity`, `is_active`, `sort_order`).
+     - `backend/app/Models/PasswordChangeOtp.php`: Model penyimpanan OTP perubahan password yang di-hash (`purpose`, `email`, `code_hash`, `attempts`, `expires_at`, `verified_at`, `verification_token_hash`, `used_at`).
+     - `backend/app/Models/ContentView.php`: Model pelacakan konten terbit yang dibuka per user (`user_id`, `content_id`, `viewed_at`).
+     - `backend/app/Models/HelperContact.php`: Model daftar kontak helper saluran bantuan pengguna (`name`, `role_or_title`, `channel`, `contact_value`, `available_hours`, `description`, `is_active`, `sort_order`).
+     - `backend/app/Models/MailSetting.php`: Model konfigurasi server SMTP & pengirim email (`mail_mailer`, `mail_scheme`, `mail_host`, `mail_port`, `mail_username`, `mail_password`, `mail_from_address`, `mail_from_name`, `updated_by`).
    - **Migrations**:
-     - `backend/database/migrations/0001_01_01_000000_create_users_table.php`: Skema kolom gamifikasi user (`points`, `current_streak`, `longest_streak`, `last_activity_date`, serta database index pada `points`).
-     - `backend/database/migrations/2026_10_27_000001_create_growhub_tables.php`: Skema tabel ledger `point_transactions` lengkap dengan indeks performa komposit `[user_id, created_at]` dan `[action, created_at]`.
-     - `backend/database/migrations/2026_10_28_080000_create_point_rules_table.php`: Skema tabel dinamis `point_rules` beserta migrasi data aturan awal gamifikasi.
-     - `backend/database/migrations/2026_11_03_080000_create_rank_settings_table.php`: Skema tabel `rank_settings` beserta nilai kuota bawaan sistem.
-   - **UI Views, Components & Styles**:
+     - `backend/database/migrations/0001_01_01_000000_create_users_table.php`: Skema kolom user dan kolom gamifikasi (`points`, `current_streak`, `longest_streak`, `last_activity_date`, serta indeks pada `points`).
+     - `backend/database/migrations/2026_10_27_000001_create_growhub_tables.php`: Skema inti GrowHub termasuk `contents`, `content_media`, `comments`, `point_transactions` lengkap dengan indeks performa komposit `[user_id, created_at]` dan `[action, created_at]`.
+     - `backend/database/migrations/2026_10_28_080000_create_point_rules_table.php`: Skema tabel dinamis `point_rules` beserta seed 12 aturan awal gamifikasi.
+     - `backend/database/migrations/2026_11_02_080000_create_level_rules_table.php`: Skema tabel dinamis `level_rules` beserta seed 8 level bawaan.
+     - `backend/database/migrations/2026_11_03_080000_create_rank_settings_table.php` & `2026_11_03_090000_add_reset_schedule_to_rank_settings_table.php`: Skema `rank_settings` beserta jadwal reset (`reset_frequency`, `last_reset_at`).
+     - `backend/database/migrations/2026_11_11_120000_create_password_change_otps_table.php`: Skema tabel `password_change_otps`.
+     - `backend/database/migrations/2026_11_11_140000_create_ethics_policies_table.php`: Skema tabel `ethics_policies` beserta 5 kebijakan bawaan sistem.
+     - `backend/database/migrations/2026_11_12_092000_create_content_views_table.php`: Skema tabel `content_views` dengan unique composite `['user_id', 'content_id']`.
+     - `backend/database/migrations/2026_11_24_174000_create_helper_contacts_table.php`: Skema tabel `helper_contacts` beserta seed kontak IT Helpdesk, HC Support, dan Hotline.
+     - `backend/database/migrations/2026_11_24_175000_create_mail_settings_table.php`: Skema tabel `mail_settings` untuk persistensi konfigurasi SMTP server.
+   - **UI Views, Components, Utilities & IIS Configs**:
      - `frontend/src/views/AdminPointRulesView.vue`: Halaman konsol Administrator untuk mengatur bobot poin per aksi, toggle saklar aktif/nonaktif real-time, konfigurasi batasan harian, dan fitur reset default.
-     - `frontend/src/styles/features/admin-point-rules.css`: Deklarasi styling terisolasi khusus modul manajemen aturan poin admin (switch slider, point stepper, filter kategori).
-     - `frontend/src/views/rank-settings/AdminRankSettingsView.vue`: Halaman konsol Administrator untuk mengonfigurasi batas kuota Top Leaderboard, widget Beranda, saklar podium, saklar ranking luar, dan live preview simulation.
-     - `frontend/src/styles/features/admin-rank-settings.css`: Deklarasi styling terisolasi khusus modul pengaturan ranking admin.
-     - `frontend/src/views/LeaderboardView.vue`: Halaman utama papan peringkat dengan visual Podium Top 3 (emas, perak, perunggu), filter tab periode waktu (*This Week*, *This Month*, *All-Time*), dropdown filter divisi/departemen, tabel peringkat interaktif, dan sticky card posisi user sendiri.
-     - `frontend/src/styles/features/leaderboard.css`: Deklarasi styling terisolasi khusus modul leaderboard (animasi podium, medali warna, kartu floating).
-     - `frontend/src/views/DashboardView.vue`: Dasbor statistik pribadi karyawan yang memuat kartu poin, indikator streak harian, progres bar level, dan tabel mutasi poin terakhir.
-     - `frontend/src/styles/features/dashboard.css`: Styling modular untuk dasbor statistik dan widget gamifikasi pengguna.
-     - `frontend/src/components/layout/Navbar.vue`: Header navigasi yang memuat indikator cepat real-time: Total Poin (*Sparkles*), Active Streak (*Flame* beranimasi saat aktif), dan Level Pill.
-     - `frontend/src/components/layout/Sidebar.vue`: Sidebar navigasi yang menyertakan link menu "Point Settings" untuk Administrator dan mini card gamifikasi di bagian bawah.
-     - `frontend/src/views/HomeView.vue`: Widget *Top Weekly Contributors* pada dashboard utama beranda aplikasi.
-     - `frontend/src/stores/auth.js`: Pinia state management penampung data reaktif user (`userPoints`, `userStreak`, `userLevel`, `isAdmin`).
+     - `frontend/src/views/level-rules/AdminLevelRulesView.vue`: Halaman konsol Administrator untuk manajemen jenjang level dinamis (*Level Settings*), kustomisasi ikon & warna badge, serta roadmap level.
+     - `frontend/src/views/rank-settings/AdminRankSettingsView.vue`: Halaman konsol Administrator untuk mengonfigurasi batas kuota Top Leaderboard, widget Beranda, jadwal reset, saklar podium/ranking luar, dan live preview simulation.
+     - `frontend/src/views/policy-config/AdminPolicyConfigView.vue`: Halaman konsol Administrator untuk mengelola daftar aturan etika komunikasi, pengurangan poin sanksi, dan pratinjau pop-up etika.
+     - `frontend/src/views/admin/AdminHelperContactsView.vue`: Halaman konsol Administrator untuk mengelola kontak helper bantuan teknis dan support.
+     - `frontend/src/views/admin/AdminMailSettingView.vue`: Halaman konsol Administrator untuk konfigurasi server SMTP, port, kredensial, dan live test pengiriman email.
+     - `frontend/src/views/HistoryContentView.vue`: Halaman daftar lengkap konten yang pernah dibuka oleh user (*History Content*).
+     - `frontend/src/views/LeaderboardView.vue` & `frontend/src/views/DashboardView.vue` & `frontend/src/views/HomeView.vue`: Halaman klasemen, dasbor pribadi, dan beranda (termasuk widget *Recently Viewed* 3 konten terakhir, *Top This Week*, *Recommended Modules*, dan *Knowledge Categories* dengan tinggi konsisten & loading skeleton).
+     - `frontend/src/components/common/EthicsNoticeModal.vue` & `ContentCardSkeleton.vue`: Komponen pop-up Pemberitahuan Etika Komunikasi pasca-login dan komponen kerangka muat seragam.
+     - `frontend/src/utils/httpError.js` & `frontend/src/api/client.js`: Utilitas standarisasi pesan error respons HTTP (`400`–`504`) dan interceptor Axios terpusat.
+     - `frontend/public/web.config` & `backend/public/web.config`: Konfigurasi URL Rewrite dan IIS FastCGI (dukungan verb `GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS`) untuk deployment Windows IIS.
 
 ### 2.7 Admin Console (User Management)
 1. **Direktori Karyawan Lengkap**:
@@ -167,23 +192,27 @@ Sistem GrowHub memiliki modul fungsional terintegrasi yang terbagi berdasarkan h
      - **Saklar Panggung Podium Top 3 (`show_podium`)**: Saklar On/Off panggung visual podium Top 3 (Emas, Perak, Perunggu).
      - **Saklar Transparansi Posisi Luar Kuota (`show_my_rank_outside`)**: Menampilkan nomor peringkat nyata karyawan jika berada di luar batas kuota Top X.
      - **Live Interactive Simulation Preview**: Visualisasi langsung mockup podium, tabel, dan kartu sticky rank secara real-time.
-6. **Manajemen Batas Kuota Peringkat & Siklus Reset Leaderboard (Rank Settings)**:
-   - Panel kontrol interaktif bagi Administrator (`/admin/rank-settings`) untuk:
-     - **Kebijakan Siklus Reset Leaderboard (`reset_frequency`)**: Menentukan kapan skor leaderboard direset otomatis: `never` (tanpa reset / sepanjang masa), `weekly` (mingguan / tiap Senin), `monthly` (bulanan / tiap tanggal 1), `quarterly` (triwulan / 3 bulan), atau `yearly` (tahunan / tiap 1 Januari).
-     - **Aksi Reset Instan Sekarang (*Manual Reset Now*)**: Endpoint `POST /api/admin/rank-settings/manual-reset` dan `POST /api/admin/rank-settings/clear-manual-reset` untuk memulai musim kompetisi baru seketika atau membatalkan status reset manual.
-     - **Batas Kuota Peringkat Teratas (`leaderboard_limit`)**: Membatasi Top X karyawan yang diambil dari basis data dan ditampilkan di Leaderboard (preset: Top 10, Top 20, Top 25, Top 50, Top 100, atau input kustom 3–500).
-     - **Batas Kuota Widget Beranda (`home_widget_limit`)**: Penyesuaian batas kuota widget mingguan Beranda (Top 3, Top 5, Top 10).
-     - **Saklar Panggung Podium Top 3 (`show_podium`)**: Saklar On/Off panggung visual podium Top 3 (Emas, Perak, Perunggu).
-     - **Saklar Transparansi Posisi Luar Kuota (`show_my_rank_outside`)**: Menampilkan nomor peringkat nyata karyawan jika berada di luar batas kuota Top X.
-     - **Live Interactive Simulation Preview**: Visualisasi langsung mockup podium, tabel, dan kartu sticky rank secara real-time.
+7. **Manajemen Jenjang Level Dinamis (Level Settings)**:
+   - Panel kontrol Administrator (`/admin/level-rules`) untuk mengelola nama level, ambang batas `min_points`, ikon lencana, warna badge, toggle aktif/nonaktif, tambah tier baru, edit massal (*batch save*), dan reset ke 8 level default.
+8. **Manajemen Kebijakan Etika & Moderasi Komentar (`Policy and Validation Config`)**:
+   - Panel kontrol Administrator (`/admin/policy-config`) untuk menambah, mengedit massal (*batch update*), mengurutkan (`sort_order`), atau menghapus aturan etika komunikasi (`title`, `description`, `point_deduction`, `severity`, minimal 1 aturan tersisa).
+   - Besaran punishment pengurangan poin bersifat **dinamis per jenis pelanggaran** (tidak statis -1 Pts untuk semua), misalnya:
+     - Pelanggaran Berat (*High Severity*, misal: kebocoran data rahasia perusahaan/pelanggan, ujaran SARA & kebencian): sanksi default **-5 Pts**.
+     - Pelanggaran Sedang (*Medium Severity*, misal: spamming/manipulasi poin, promosi pribadi di luar pekerjaan): sanksi default **-3 Pts s/d -2 Pts**.
+     - Pelanggaran Ringan (*Low Severity*, misal: informasi menyesatkan/dokumentasi tidak asli): sanksi default **-1 Pts**.
+     - Administrator dapat mengubah angka pengurangan poin (`point_deduction`) secara fleksibel dari 1 hingga 10.000 Pts sesuai kebijakan perusahaan.
+   - Tersedia pratinjau langsung pop-up **Pemberitahuan Etika Komunikasi** (lengkap dengan label sanksi poin per item) serta integrasi wajib pilih alasan pelanggaran (`ethics_policy_id`) saat Admin menghapus komentar pengguna lain di detail konten.
 
-### 2.8 Profil Karyawan, Tiket Bantuan & Notifikasi
+### 2.8 Profil Karyawan, Tiket Bantuan & Kontak Helper
 1. **Portofolio Karyawan**:
    - Ringkasan statistik pribadi: jumlah karya terbit, total like terkumpul, total view, komunitas yang diikuti, dan materi kursus yang telah diselesaikan.
-2. **Help & Support Ticket**:
-   - Tanya jawab seputar sistem (FAQ).
-   - Pengiriman tiket bantuan langsung ke tim Admin HC/IT dengan pelacakan status (*Open*, *In Progress*, *Resolved*).
-3. **Real-time In-App Notifications**:
+2. **Help & Support Ticket & Kontak Helper**:
+   - **Layanan Kontak Helper Karyawan**: Menampilkan daftar kontak helper resmi (WhatsApp, Email, Telepon Hotline, Telegram) lengkap dengan jam operasional, nama PIC, dan tombol aksi langsung untuk bantuan login, lupa password, aktivasi akun, dan kendala teknis.
+   - **Tanya Jawab Seputar Sistem (FAQ)**: Panduan ringkas seputar akun, konten, dan gamifikasi.
+   - **Pengiriman Tiket Bantuan**: Pengiriman tiket bantuan langsung ke tim Admin HC/IT dengan pelacakan status (*Open*, *In Progress*, *Resolved*).
+3. **Manajemen Kontak Helper (Admin Console - `/admin/helper-contacts`)**:
+   - Administrator dapat menambah, mengedit, mengaktifkan/menonaktifkan, mengurutkan, menghapus, atau mereset daftar kontak helper yang tampil di Halaman Login dan Halaman Help & Support.
+4. **Real-time In-App Notifications**:
    - Pemberitahuan otomatis ketika konten disetujui, ditolak, menerima interaksi like/komentar, atau saat mendapatkan bonus poin streak.
 
 ---
@@ -271,10 +300,10 @@ graph TD
 
     subgraph BackendLayer["⚙️ Backend Layer (REST API Service)"]
         Framework["Laravel 13 Framework"]
-        Runtime["PHP 8.4+ Engine"]
-        Security["Sanctum Auth & RBAC Middleware"]
+        Runtime["PHP 8.3 / 8.4 Engine"]
+        Security["Sanctum Auth, CORS & RBAC Middleware"]
         ORM["Eloquent ORM & Relational Models"]
-        StorageEngine["Flysystem File Storage Handler"]
+        StorageEngine["Flysystem File Storage & SMTP Mailer"]
     end
 
     subgraph DataLayer["🗄️ Database & Storage Layer"]
@@ -303,14 +332,14 @@ graph TD
 | Lapisan (Layer) | Teknologi | Versi | Alasan Pemilihan & Fungsi |
 | :--- | :--- | :--- | :--- |
 | **Frontend Framework** | **Vue.js 3** | `^3.5.x` | Menggunakan *Composition API* dengan sintaks `<script setup>` yang ringkas, cepat, dan reaktif. |
-| **Frontend Tooling** | **Vite** | `^8.x` | *Build tool* dan *dev server* berbasis Rollup/ESBuild yang menghasilkan bundle ringan dan HMR (*Hot Module Replacement*) sekejap. |
-| **State Management** | **Pinia** | `^4.x` | Pengelolaan state global untuk autentikasi pengguna (`authStore`), notifikasi toast (`toastStore`), dan reaktivitas data. |
-| **Client Routing** | **Vue Router** | `^4.x` | Navigasi SPA dengan *navigation guards* untuk proteksi hak akses role (*guest*, *auth*, *reviewer*) dan deteksi `must_change_password`. |
-| **HTTP Client** | **Axios** | `^1.x` | Pengiriman request HTTP terpusat dengan interceptor Bearer Token otomatis dan penanganan error 401/403/422. |
-| **Icon Set** | **Lucide Vue Next**| `^1.x` | Set ikon SVG modern yang konsisten, bersih, dan hemat bobot bundle. |
-| **Styling Engine** | **Vanilla CSS 3** | Standard | CSS kustom murni menggunakan variabel token (`var(--primary)`), flexbox, grid, dan glassmorphism tanpa dependensi runtime pihak ketiga. |
-| **Backend Framework** | **Laravel** | `13.x` (`^13.17`) | Framework PHP enterprise paling modern dengan arsitektur elegan, Eloquent ORM bertenaga, validasi bawaan, dan keamanan tinggi. |
-| **Runtime Bahasa** | **PHP** | `8.4.27` (`^8.4`) | Versi PHP 8.4 modern mendukung fitur Property Hooks, Asymmetric Visibility, performance JIT optimal, dan keamanan mutakhir. |
+| **Frontend Tooling** | **Vite** | `^8.x` | *Build tool* dan *dev server* berbasis Vite/Rollup yang menghasilkan bundle ringan, HMR instan, dan proxy API `/api` & `/storage` selama development. |
+| **State Management** | **Pinia** | `^4.x` (`4.1+`) | Pengelolaan state global untuk autentikasi pengguna (`authStore`), modal pemberitahuan etika, dan notifikasi toast (`toastStore`). |
+| **Client Routing** | **Vue Router** | `^4.x` (`4.6+`) | Navigasi SPA dengan *navigation guards* untuk proteksi hak akses role (*guest*, *auth*, *reviewer*, *admin*) dan deteksi `must_change_password`. |
+| **HTTP Client** | **Axios + `httpError.js`** | `^1.20.x` | Pengiriman request HTTP terpusat dengan interceptor Bearer Token otomatis serta pemetaan standar kode respons HTTP (`400`–`504`) dan galat jaringan. |
+| **Icon Set** | **Lucide Vue Next**| `^1.0.x` | Set ikon SVG modern yang konsisten, bersih, dan hemat bobot bundle. |
+| **Styling Engine** | **Vanilla CSS 3** | Standard | CSS kustom murni menggunakan variabel token (`var(--primary)`), flexbox, grid, loading skeleton, dan glassmorphism. |
+| **Backend Framework** | **Laravel** | `13.x` (`^13.17`) | Framework PHP enterprise modern dengan Eloquent ORM, validasi terstruktur, rate limiter, CORS middleware, dan Laravel Mail (OTP & notifikasi). |
+| **Runtime Bahasa** | **PHP** | `8.3+ / 8.4` (`^8.3 \|\| ^8.4`) | Mendukung runtime PHP 8.3 maupun PHP 8.4 sesuai `composer.json` dengan performa OPcache/JIT optimal dan ekstensi PostgreSQL modern. |
 | **Autentikasi API** | **Laravel Sanctum**| `^4.x` | Token bearer API ringan (*personal access tokens*) untuk SPA tanpa kompleksitas OAuth server yang berlebihan. |
 | **Database Server** | **PostgreSQL** | `14+` | RDBMS tangguh kelas enterprise dengan kemampuan indexing JSON, performa transaksi tinggi, dan konkurensi handal. |
 | **Media & Storage** | **Flysystem / Public Disk** | Laravel Core | Pengelolaan penyimpanan berkas foto profil, lampiran dokumen, gambar materi, dan video secara aman. |
@@ -328,6 +357,8 @@ erDiagram
     users ||--o{ comments : "memberikan komentar"
     users ||--o{ likes : "menyukai"
     users ||--o{ saves : "menyimpan"
+    users ||--o{ content_views : "membuka konten"
+    users ||--o{ password_change_otps : "memverifikasi OTP"
     users ||--o{ shares : "membagikan"
     users ||--o{ community_members : "bergabung"
     users ||--o{ course_completions : "menyelesaikan kursus"
@@ -342,6 +373,7 @@ erDiagram
     contents ||--o{ comments : "memiliki komentar"
     contents ||--o{ likes : "menerima like"
     contents ||--o{ saves : "disimpan"
+    contents ||--o{ content_views : "dicatat riwayat baca"
     contents ||--o{ shares : "dibagikan"
 
     courses ||--o{ course_completions : "diselesaikan oleh"
@@ -463,6 +495,65 @@ erDiagram
         varchar status "open | in_progress | resolved"
         text response
     }
+
+    content_views {
+        bigint id PK
+        bigint user_id FK
+        bigint content_id FK
+        timestamp viewed_at
+    }
+
+    password_change_otps {
+        bigint id PK
+        bigint user_id FK
+        varchar purpose
+        varchar email
+        varchar code_hash
+        int attempts
+        timestamp expires_at
+        timestamp verified_at
+        timestamp used_at
+    }
+
+    point_rules {
+        bigint id PK
+        varchar action UK
+        varchar name
+        varchar category
+        int points
+        int daily_cap
+        bool is_active
+        int sort_order
+    }
+
+    level_rules {
+        bigint id PK
+        int level
+        varchar name
+        int min_points
+        varchar badge_icon
+        varchar badge_color
+        bool is_active
+    }
+
+    rank_settings {
+        bigint id PK
+        varchar key UK
+        varchar label
+        text value
+        varchar type
+        json options
+    }
+
+    ethics_policies {
+        bigint id PK
+        varchar title
+        text description
+        int point_deduction
+        varchar severity "low | medium | high"
+        bool is_active
+        int sort_order
+    }
 ```
 
 ---
@@ -555,7 +646,47 @@ Buku kas (*ledger*) riwayat perolehan atau penyesuaian poin karyawan untuk audit
 
 ---
 
-#### 6. Tabel Pendukung Lainnya
+#### 6. Tabel: `content_views`
+Mencatat riwayat pembacaan konten berstatus `published` per pengguna untuk fitur *Recently Viewed* dan *History Content*.
+| Kolom | Tipe Data | Keterangan |
+| :--- | :--- | :--- |
+| `id` | `BIGSERIAL` (PK) | Primary Key |
+| `user_id` | `BIGINT` (FK) | Relasi ke `users.id` (Cascade on delete) |
+| `content_id` | `BIGINT` (FK) | Relasi ke `contents.id` (Cascade on delete) |
+| `viewed_at` | `TIMESTAMP` | Waktu terakhir konten dibuka oleh pengguna |
+
+*(Constraint: Unique composite `['user_id', 'content_id']`, Index komposit `['user_id', 'viewed_at']`)*.
+
+---
+
+#### 7. Tabel: `password_change_otps`
+Menyimpan OTP 6 digit yang di-hash beserta token verifikasi jangka pendek untuk penggantian password login pertama kali maupun profil.
+| Kolom | Tipe Data | Keterangan |
+| :--- | :--- | :--- |
+| `id` | `BIGSERIAL` (PK) | Primary Key |
+| `user_id` | `BIGINT` (FK) | Relasi ke `users.id` (Cascade on delete) |
+| `purpose` | `VARCHAR(40)` | Tujuan OTP: `first_change_password` atau `profile_change_password` |
+| `email` | `VARCHAR(255)` | Alamat email tujuan pengiriman OTP |
+| `code_hash` | `VARCHAR(255)` | Hash Bcrypt kode OTP 6 digit |
+| `attempts` | `SMALLINT` | Jumlah percobaan verifikasi salah (maks. 5 kali) |
+| `expires_at` | `TIMESTAMP` | Waktu kedaluwarsa OTP |
+| `verified_at` | `TIMESTAMP` | Waktu OTP berhasil diverifikasi (Nullable) |
+| `verification_token_hash` | `VARCHAR(255)` | Hash token verifikasi sementara sebelum ubah password (Nullable) |
+| `used_at` | `TIMESTAMP` | Waktu token OTP selesai dipakai mengganti password (Nullable) |
+
+---
+
+#### 8. Tabel Konfigurasi Dinamis Admin (`point_rules`, `level_rules`, `rank_settings`, `ethics_policies`, `helper_contacts`, `mail_settings`)
+- **`point_rules`**: Menyimpan 12 aturan poin gamifikasi bawaan (`action` unik, `name`, `description`, `category`, `points`, `daily_cap`, `is_active`, `sort_order`).
+- **`level_rules`**: Menyimpan konfigurasi tier level (`level`, `name`, `min_points`, `description`, `badge_icon`, `badge_color`, `is_active`).
+- **`rank_settings`**: Menyimpan pasangan key-value pengaturan leaderboard (`leaderboard_limit`, `home_widget_limit`, `show_podium`, `show_my_rank_outside`, `reset_frequency`, `last_reset_at`).
+- **`ethics_policies`**: Menyimpan daftar aturan etika komunikasi & pelanggaran (`title`, `description`, `point_deduction`, `severity`, `is_active`, `sort_order`).
+- **`helper_contacts`**: Menyimpan daftar kontak layanan bantuan helper teknis & akun yang ditampilkan di halaman login dan help & support (`name`, `role_or_title`, `channel`, `contact_value`, `available_hours`, `description`, `is_active`, `sort_order`).
+- **`mail_settings`**: Menyimpan konfigurasi koneksi SMTP server dan pengirim email resmi sistem (`mail_mailer`, `mail_scheme`, `mail_host`, `mail_port`, `mail_username`, `mail_password`, `mail_from_address`, `mail_from_name`, `updated_by`).
+
+---
+
+#### 9. Tabel Pendukung Lainnya
 - **`categories`**: Daftar 8 kategori konten sistem dengan icon dan color code.
 - **`communities` & `community_members`**: Komunitas karyawan dan relasi keanggotaan.
 - **`comments`**: Thread diskusi komentar pada konten dengan hierarki `parent_id` (nested replies).
@@ -575,7 +706,7 @@ Panduan berikut dirancang untuk deployment production-ready pada **Linux Server 
 ### Bagian A: Deployment di Linux Server (Ubuntu 22.04 / 24.04 LTS)
 
 #### Langkah 1: Persiapan Server & Instalasi Dependensi
-Jalankan update package dan instal PHP 8.4, ekstensi yang dibutuhkan, PostgreSQL, Nginx, Node.js, dan Composer:
+Jalankan update package dan instal PHP 8.3/8.4 (`^8.3 || ^8.4`), ekstensi yang dibutuhkan, PostgreSQL, Nginx, Node.js, dan Composer:
 
 ```bash
 # Update repository
@@ -664,9 +795,21 @@ DB_PASSWORD=PasswordKuatGrowHub2026!
 
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
+
+# Konfigurasi Email SMTP (wajib untuk OTP ganti password & notifikasi pelanggaran etika)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.perusahaan.co.id
+MAIL_PORT=587
+MAIL_USERNAME=noreply@perusahaan.co.id
+MAIL_PASSWORD=PasswordSmtpAnda
+MAIL_FROM_ADDRESS="noreply@perusahaan.co.id"
+MAIL_FROM_NAME="GrowHub"
+
+# Konfigurasi CORS jika frontend & backend diakses dari origin/domain berbeda
+CORS_ALLOWED_ORIGINS=https://growhub.perusahaan.co.id
 ```
 
-Jalankan migrasi database, seeder data awal, dan storage link:
+Jalankan migrasi database, seeder data awal (*idempotent* — aman dijalankan ulang via `firstOrCreate`/`updateOrCreate`), dan storage link:
 ```bash
 # Jalankan migrasi tabel
 php artisan migrate --force
@@ -700,8 +843,11 @@ cd /var/www/growhub/frontend
 # Instal dependensi NPM
 npm ci
 
-# Sesuaikan file .env jika ada konfigurasi API URL
-# Contoh: VITE_API_BASE_URL=https://growhub.perusahaan.co.id/api
+# Sesuaikan file .env.production (atau .env) untuk URL API backend
+# Jika backend berada di origin/domain terpisah atau port khusus:
+# VITE_API_URL=https://api-growhub.perusahaan.co.id/api
+# Jika disatukan pada domain yang sama (/api di-proxy web server):
+# VITE_API_URL=/api
 
 # Compile aset production
 npm run build
@@ -779,13 +925,13 @@ sudo certbot --nginx -d growhub.perusahaan.co.id
 
 ---
 
-### Bagian B: Deployment di Windows Server (2019 / 2022)
+### Bagian B: Deployment di Windows Server (IIS atau Nginx)
 
 #### Langkah 1: Persiapan Environment Windows Server
-1. **Instal PHP 8.4 (8.4.27) for Windows**:
-   - Unduh PHP 8.4 (Non-Thread Safe untuk Nginx / FastCGI) dari `windows.php.net`.
-   - Ekstrak ke `C:\tools\php84`.
-   - Tambahkan `C:\tools\php84` ke System Environment Variable `PATH`.
+1. **Instal PHP 8.3 atau PHP 8.4 (Non-Thread Safe) for Windows**:
+   - Unduh PHP 8.3/8.4 Non-Thread Safe (untuk IIS FastCGI / Nginx) dari `windows.php.net`.
+   - Ekstrak ke direktori instalasi PHP (misal `C:\tools\php83` atau `C:\tools\php84`).
+   - Tambahkan folder PHP tersebut ke System Environment Variable `PATH`.
 2. **Konfigurasi `php.ini`**:
    - Salin `php.ini-production` menjadi `php.ini`.
    - Buka `php.ini` dan aktifkan ekstensi berikut (hapus tanda titik koma `;`):
@@ -823,28 +969,47 @@ cd "d:\.Project Task\GrowHub\backend"
 # 2. Instal dependensi
 composer install --no-dev --optimize-autoloader
 
-# 3. Konfigurasi file .env
+# 3. Konfigurasi file .env (DB PostgreSQL, SMTP Mailer, dan CORS_ALLOWED_ORIGINS)
 copy .env.example .env
 php artisan key:generate
 
 # Sesuaikan koneksi DB pada file .env (DB_HOST=127.0.0.1, DB_DATABASE=growhub, dll)
+# Jika frontend & backend berada pada origin/port berbeda di IIS/Nginx, isi:
+# CORS_ALLOWED_ORIGINS=http://growhub.perusahaan.local
 
-# 4. Migrasi & Storage link
+# 4. Migrasi, Seeder Idempotent & Storage link
 php artisan migrate --force
 php artisan db:seed --force
 php artisan storage:link
 php artisan config:cache
 php artisan route:cache
 
-# 5. Build Frontend
+# 5. Build Frontend (sesuaikan VITE_API_URL di frontend/.env jika perlu)
 cd "d:\.Project Task\GrowHub\frontend"
-npm install
+npm ci
 npm run build
 ```
 
 ---
 
-#### Langkah 3: Konfigurasi Web Server Nginx di Windows
+#### Langkah 3 (Opsi 1): Konfigurasi Web Server IIS (Microsoft Internet Information Services)
+Project telah menyertakan file konfigurasi IIS siap pakai untuk frontend maupun backend:
+1. **Pastikan Komponen IIS Terpasang**:
+   - Aktifkan **CGI** (pada *IIS > Application Development Features*) untuk PHP FastCGI.
+   - Instal ekstensi resmi **IIS URL Rewrite Module 2.1** (wajib agar aturan rewrite pada `web.config` terbaca).
+2. **Site Frontend (`frontend/dist`)**:
+   - Arahkan *Physical Path* site IIS ke folder `frontend\dist`.
+   - Saat menjalankan `npm run build`, file `frontend/public/web.config` otomatis tersalin ke `frontend/dist/web.config` untuk menangani fallback routing Vue SPA ke `index.html`.
+3. **Site / Aplikasi Backend (`backend/public`)**:
+   - Arahkan *Physical Path* site/API IIS ke folder `backend\public` (sudah dilengkapi file `backend/public/web.config` yang mengarahkan semua request non-file/non-direktori ke `index.php`).
+   - Pastikan **Handler Mappings (`PHP_via_FastCGI`)** mengizinkan seluruh HTTP verbs (**All verbs**, khususnya `GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS`) atau tidak memblokir preflight `OPTIONS` agar *CORS preflight*, update (`PUT`), dan moderasi/hapus (`DELETE`) berjalan tanpa error `405 Method Not Allowed`.
+   - Pastikan modul **WebDAV** tidak aktif mengintersep request `PUT`/`DELETE`, serta pastikan folder `backend/storage` dan `backend/bootstrap/cache` memiliki izin tulis (*Modify*) untuk akun app pool IIS (`IIS_IUSRS`).
+4. **Sinkronisasi CORS Lintas Origin (Jika Frontend & Backend Terpisah)**:
+   - Isi `CORS_ALLOWED_ORIGINS` pada `backend/.env` sesuai domain/port frontend (misal `http://growhub.perusahaan.local`), jalankan `php artisan config:clear && php artisan config:cache`, dan isi `VITE_API_URL` pada frontend sebelum `npm run build` mengarah ke URL `/api` backend.
+
+---
+
+#### Langkah 3 (Opsi 2): Konfigurasi Web Server Nginx di Windows
 1. Unduh Nginx for Windows dari `nginx.org` dan ekstrak ke `C:\tools\nginx`.
 2. Edit file `C:\tools\nginx\conf\nginx.conf`:
 
@@ -926,12 +1091,13 @@ Jika ingin menjalankan sistem untuk kebutuhan pengujian developer:
    php artisan serve --port=8001
    ```
 2. **Jalankan Frontend (Terminal 2)**:
+   *(Vite dev server secara otomatis mem-proxy `/api` dan `/storage` ke `http://127.0.0.1:8001` atau target variabel env `VITE_BACKEND_URL`)*:
    ```bash
    cd frontend
    npm run dev
    ```
 3. Buka peramban (*browser*) pada alamat: `http://localhost:5173`.
-4. Akun demo bawaan sistem yang siap digunakan:
+4. Akun demo bawaan `DatabaseSeeder` (username & password awal = NIP):
    - **Administrator**: NIP `1000000001` (Password: `1000000001`)
-   - **Reviewer**: NIP `1000000002` (Password: `1000000002`)
-   - **Employee**: NIP `202301001` (Password: `202301001`)
+   - **Reviewer**: NIP `1000000002` (Password: `1000000002`), NIP `1000000003` (Password: `1000000003`)
+   - **Employee**: NIP `202301001` (Password: `202301001`) s/d `2023010017`

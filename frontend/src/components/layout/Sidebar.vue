@@ -91,6 +91,16 @@
             <ShieldAlert :size="19" />
             <span>Policy and Validation Config</span>
           </router-link>
+
+          <router-link v-if="authStore.isAdmin" to="/admin/helper-contacts" class="nav-item" @click="$emit('close')">
+            <Headphones :size="19" />
+            <span>Helper Contacts</span>
+          </router-link>
+
+          <router-link v-if="authStore.isAdmin" to="/admin/mail-settings" class="nav-item" @click="$emit('close')">
+            <Mail :size="19" />
+            <span>Mail Settings</span>
+          </router-link>
         </nav>
       </div>
 
@@ -162,7 +172,7 @@
 <script setup>
 import {
   House, BookOpen, LayoutDashboard, GraduationCap, Users,
-  SquarePen, Bookmark, History, Trophy, ShieldCheck, ShieldAlert, Bell, CircleAlert, User, Award,
+  SquarePen, Bookmark, History, Trophy, ShieldCheck, ShieldAlert, Headphones, Mail, Bell, CircleAlert, User, Award,
   ChevronLeft, ChevronRight, Sparkles, TrendingUp
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'

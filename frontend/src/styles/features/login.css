@@ -535,3 +535,254 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   Helper & Support Contacts Box (Login Page)
+   ========================================================================== */
+
+.btn-helper-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+}
+
+.btn-helper-link:hover {
+  background: var(--green-50, #edf8f1);
+}
+
+.login-helper-card {
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-helper-card:hover {
+  border-color: #cbd5e1;
+}
+
+.login-helper-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8faf8;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.login-helper-toggle:hover {
+  background: #f1f5f2;
+}
+
+.helper-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.helper-icon-bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e8f5ed;
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.helper-toggle-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.helper-toggle-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.helper-toggle-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-top: 1px;
+}
+
+.helper-chevron {
+  color: var(--text-3);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.helper-chevron.is-flipped {
+  transform: rotate(180deg);
+}
+
+.login-helper-content {
+  padding: 14px 16px 16px;
+  background: #ffffff;
+  border-top: 1px solid var(--border);
+  animation: fadeIn 0.25s ease;
+}
+
+.helper-contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.helper-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fbf9;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.helper-contact-item:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.helper-channel-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.channel-whatsapp { background: #e8f9ee; color: #16a34a; }
+.channel-email { background: #eff6ff; color: #2563eb; }
+.channel-phone { background: #f0fdf4; color: #059669; }
+.channel-telegram { background: #f0f9ff; color: #0284c7; }
+.channel-other { background: #f3f4f6; color: #4b5563; }
+
+.helper-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.helper-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.helper-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.helper-channel-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-whatsapp { background: #dcfce7; color: #15803d; }
+.badge-email { background: #dbeafe; color: #1d4ed8; }
+.badge-phone { background: #d1fae5; color: #047857; }
+.badge-telegram { background: #e0f2fe; color: #0369a1; }
+.badge-other { background: #f3f4f6; color: #4b5563; }
+
+.helper-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 3px;
+}
+
+.helper-hours {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+
+.helper-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.helper-action-row {
+  margin-top: 6px;
+}
+
+.btn-contact-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.btn-contact-action:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.action-whatsapp {
+  background: #16a34a;
+  color: #ffffff !important;
+}
+
+.action-email {
+  background: #2563eb;
+  color: #ffffff !important;
+}
+
+.action-phone {
+  background: #059669;
+  color: #ffffff !important;
+}
+
+.action-telegram {
+  background: #0284c7;
+  color: #ffffff !important;
+}
+
+.action-other {
+  background: var(--dark);
+  color: #ffffff !important;
+}

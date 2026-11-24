@@ -26,6 +26,8 @@ import AdminPointRulesView from '@/views/point-rules/AdminPointRulesView.vue'
 import AdminLevelRulesView from '@/views/level-rules/AdminLevelRulesView.vue'
 import AdminRankSettingsView from '@/views/rank-settings/AdminRankSettingsView.vue'
 import AdminPolicyConfigView from '@/views/policy-config/AdminPolicyConfigView.vue'
+import AdminHelperContactsView from '@/views/admin/AdminHelperContactsView.vue'
+import AdminMailSettingView from '@/views/admin/AdminMailSettingView.vue'
 
 const routes = [
   {
@@ -188,6 +190,18 @@ const routes = [
         name: 'admin-policy-config',
         component: AdminPolicyConfigView,
         meta: { title: 'Policy and Validation Config – GrowHub', requiresAdmin: true },
+      },
+      {
+        path: 'admin/helper-contacts',
+        name: 'admin-helper-contacts',
+        component: AdminHelperContactsView,
+        meta: { title: 'Helper Contacts Management – GrowHub', requiresAdmin: true },
+      },
+      {
+        path: 'admin/mail-settings',
+        name: 'admin-mail-settings',
+        component: AdminMailSettingView,
+        meta: { title: 'Mail & SMTP Settings – GrowHub', requiresAdmin: true },
       },
     ],
   },

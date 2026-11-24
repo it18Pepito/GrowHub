@@ -116,6 +116,7 @@ class CommentViolationModerationTest extends TestCase
         $content->update(['comments_count' => 1]);
 
         $policy = EthicsPolicy::query()->orderBy('sort_order')->firstOrFail();
+        $policy->update(['point_deduction' => 3]);
 
         Sanctum::actingAs($admin);
 
@@ -126,18 +127,18 @@ class CommentViolationModerationTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'comments_count' => 0,
-                'points_deducted' => 1,
+                'points_deducted' => 3,
                 'email_sent' => true,
                 'violation_reason' => $policy->title,
             ]);
 
         $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
         $this->assertSame(0, $content->fresh()->comments_count);
-        $this->assertSame(9, $commenter->fresh()->points);
+        $this->assertSame(7, $commenter->fresh()->points);
 
         $this->assertDatabaseHas('point_transactions', [
             'user_id' => $commenter->id,
-            'points' => -1,
+            'points' => -3,
             'action' => 'policy_violation',
             'description' => "Pelanggaran etika komentar: {$policy->title}",
         ]);
@@ -154,11 +155,11 @@ class CommentViolationModerationTest extends TestCase
 
             return $mail->hasTo($commenter->email)
                 && $mail->policy->id === $policy->id
-                && $mail->pointsDeducted === 1
-                && $mail->remainingPoints === 9
+                && $mail->pointsDeducted === 3
+                && $mail->remainingPoints === 7
                 && str_contains($html, e($policy->title))
                 && str_contains($html, 'Komentar mengandung unsur penghinaan.')
-                && str_contains($html, '-1 Poin');
+                && str_contains($html, '-3 Poin');
         });
     }
 
@@ -185,6 +186,7 @@ class CommentViolationModerationTest extends TestCase
         $content->update(['comments_count' => 2]);
 
         $policy = EthicsPolicy::query()->orderBy('sort_order')->firstOrFail();
+        $policy->update(['point_deduction' => 1]);
 
         Sanctum::actingAs($admin);
 
@@ -272,6 +274,7 @@ class CommentViolationModerationTest extends TestCase
         $content->update(['comments_count' => 1]);
 
         $policy = EthicsPolicy::query()->orderBy('sort_order')->firstOrFail();
+        $policy->update(['point_deduction' => 1]);
 
         Sanctum::actingAs($other);
         $this->deleteJson("/api/comments/{$comment->id}", [

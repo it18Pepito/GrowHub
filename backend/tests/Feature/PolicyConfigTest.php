@@ -60,31 +60,34 @@ class PolicyConfigTest extends TestCase
         $employee = $this->makeUser('employee', '202602003');
         Sanctum::actingAs($admin);
 
-        // Create new rule (point_deduction is fixed at default 1 even if custom value passed)
+        // Create new rule with custom point_deduction (dynamic, not static 1)
         $createRes = $this->postJson('/api/admin/policy-configs', [
             'title' => 'Berbagi Akun Login',
             'description' => 'Dilarang meminjamkan akun kepada orang lain.',
-            'point_deduction' => 60,
+            'point_deduction' => 5,
+            'severity' => 'high',
         ])->assertStatus(201)
-            ->assertJsonPath('policy.point_deduction', 1);
+            ->assertJsonPath('policy.point_deduction', 5)
+            ->assertJsonPath('policy.severity', 'high');
 
         $newId = $createRes->json('policy.id');
         $this->assertSame(6, EthicsPolicy::count());
 
-        // Batch update
+        // Batch update with modified point_deduction
         $this->putJson('/api/admin/policy-configs/batch', [
             'policies' => [
                 [
                     'id' => $newId,
                     'title' => 'Berbagi Kredensial Akun',
                     'description' => 'Dilarang keras membagikan password atau OTP.',
-                    'point_deduction' => 80,
+                    'point_deduction' => 8,
+                    'severity' => 'high',
                     'sort_order' => 1,
                 ],
             ],
         ])->assertOk();
 
-        $this->assertSame(1, EthicsPolicy::find($newId)->point_deduction);
+        $this->assertSame(8, EthicsPolicy::find($newId)->point_deduction);
 
         // Newly created policy appears in employee login popup list
         Sanctum::actingAs($employee);

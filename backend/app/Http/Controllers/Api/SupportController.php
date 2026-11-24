@@ -8,6 +8,18 @@ use Illuminate\Http\Request;
 
 class SupportController extends Controller
 {
+    public function helpers(): \Illuminate\Http\JsonResponse
+    {
+        $helpers = \App\Models\HelperContact::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'helpers' => $helpers,
+        ]);
+    }
+
     public function faqs()
     {
         $p = config('gamification.points');

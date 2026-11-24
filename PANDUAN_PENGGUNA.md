@@ -17,7 +17,7 @@
 10. [Sistem Poin, Streak, dan Level Gamifikasi](#10-sistem-poin-streak-dan-level-gamifikasi)
 11. [Mengelola Profil Pribadi & Foto Avatar](#11-mengelola-profil-pribadi--foto-avatar)
 12. [Panduan Khusus Tim Reviewer (Kurator)](#12-panduan-khusus-tim-reviewer-kurator)
-13. [Panduan Khusus Administrator (User, Point, Level & Rank Settings)](#13-panduan-khusus-administrator-user-point-level--rank-settings)
+13. [Panduan Khusus Administrator (User, Point, Level, Rank, Policy, Helper & Mail Settings)](#13-panduan-khusus-administrator-user-point-level-rank--policy-settings)
 14. [Pertanyaan yang Sering Diajukan (FAQ) & Bantuan](#14-pertanyaan-yang-sering-diajukan-faq--bantuan)
 15. [Etika & Aturan Berbagi di GrowHub](#15-etika--aturan-berbagi-di-growhub)
 
@@ -26,12 +26,8 @@
 ## 1. Mengenal GrowHub
 
 ### Apa itu GrowHub?
-**GrowHub** adalah portal web internal perusahaan yang dirancang khusus bagi seluruh karyawan (baik staf toko, kasir, pramuniaga, staf gudang/logistik, hingga staf kantor pusat) untuk saling bertukar ilmu, berbagi solusi masalah di lapangan, membaca panduan standar kerja (SOP), dan mengikuti pelatihan mandiri secara interaktif dan menyenangkan.
+**GrowHub** adalah portal web internal perusahaan yang dirancang khusus bagi seluruh karyawan (baik staf operasional cabang, layanan pelanggan, staf gudang/logistik, administrasi, hingga staf kantor pusat) untuk saling bertukar ilmu, berbagi solusi masalah di lapangan, membaca panduan standar kerja (SOP), dan mengikuti pelatihan mandiri secara interaktif dan menyenangkan.
 
-### Mengapa Menggunakan GrowHub?
-* **Mudah Menemukan Solusi Lapangan:** Menghadapi kendala mesin kasir, penataan rak (*visual display*), atau menangani komplain pelanggan? Anda dapat mencari tips praktis yang sudah terbukti berhasil dari rekan-rekan toko lain.
-* **Ide & Kontribusi Anda Diakui:** Setiap tulisan, foto penataan barang, atau usulan inovasi kerja yang Anda bagikan akan dibaca dan diapresiasi oleh rekan kerja se-Indonesia.
-* **Kumpulkan Poin & Naikkan Level:** Setiap keaktifan positif (seperti login harian, membaca materi rekan, berbagi solusi, hingga menyelesaikan modul kursus) akan menghasilkan **Poin** dan meningkatkan **Level Kehormatan** Anda di Papan Peringkat (*Leaderboard*).
 
 ---
 
@@ -41,16 +37,16 @@ Di dalam sistem GrowHub terdapat 3 peran pengguna:
 
 | Peran (Role) | Siapa Mereka? | Apa yang Bisa Dilakukan? |
 | :--- | :--- | :--- |
-| **Karyawan (Employee)** | Seluruh staf toko, kasir, pramuniaga, staf gudang, hingga staf kantor pusat. | Membaca feed artikel, menulis ide/tips, berdiskusi, mengikuti kursus pelatihan, mengumpulkan poin reward, dan bergabung di komunitas. |
-| **Reviewer (Kurator Konten)** | Supervisor, Kepala Cabang/Toko, atau tim kurasi materi yang ditunjuk. | Memeriksa kiriman artikel dari karyawan sebelum terbit, menyetujui (*Approve*), atau mengembalikan dengan catatan perbaikan (*Reject with Feedback*). |
-| **Administrator (Admin)** | Tim IT, HC/HR pusat, atau PIC Sistem. | Mengelola data karyawan, membantu reset kata sandi, mengatur aturan bobot poin gamifikasi, mengelola jenjang level (*Level Settings*), serta membatasi kuota peringkat yang tampil di leaderboard (*Rank Settings*). |
+| **Karyawan (Employee)** | Seluruh karyawan perusahaan. | Membaca feed artikel, menulis ide/tips, berdiskusi, mengikuti kursus pelatihan, mengumpulkan poin reward, dan bergabung di komunitas. |
+| **Reviewer (Kurator Konten)** | Tim kurasi materi yang ditunjuk. | Memeriksa kiriman artikel dari karyawan sebelum terbit, menyetujui (*Approve*), atau mengembalikan dengan catatan perbaikan (*Reject with Feedback*). |
+| **Administrator (Admin)** | Tim IT, HC/HR pusat, atau PIC Sistem. | Mengelola data karyawan, membantu reset kata sandi, mengatur aturan bobot poin gamifikasi, mengelola jenjang level (*Level Settings*), membatasi kuota peringkat (*Rank Settings*), serta mengatur kebijakan etika komunikasi & moderasi (*Policy and Validation Config*). |
 
 ---
 
 ## 3. Panduan Masuk (Login) & Pengaturan Akun
 
 ### 3.1 Cara Masuk ke Aplikasi
-1. Buka peramban (*web browser*) di komputer toko atau laptop/ponsel Anda (disarankan menggunakan **Google Chrome** atau **Microsoft Edge**).
+1. Buka peramban (*web browser*) di komputer atau laptop/ponsel Anda (disarankan menggunakan **Google Chrome** atau **Microsoft Edge**).
 2. Masukkan alamat URL portal GrowHub perusahaan Anda.
 3. Pada halaman Login:
    * **NIP:** Masukkan Nomor Induk Pegawai Anda (9–10 digit angka).
@@ -70,20 +66,26 @@ Di dalam sistem GrowHub terdapat 3 peran pengguna:
 
 ---
 
-### 3.2 Wajib Ganti Password (Khusus Login Pertama Kali atau Pasca-Reset)
-Demi keamanan akun Anda, sistem secara otomatis mewajibkan pembuatan password baru saat login pertama:
-1. Masukkan **Password Baru** yang Anda inginkan (minimal 8 karakter).
-2. Masukkan kembali pada kolom **Konfirmasi Password Baru**.
-3. Pastikan kata sandi baru **tidak sama dengan NIP default** Anda.
-4. Klik **"Simpan & Lanjutkan"**. Setelah berhasil disimpan, Anda langsung masuk ke halaman Beranda.
+### 3.2 Wajib Ganti Password & Verifikasi OTP Email (Login Pertama Kali atau Pasca-Reset)
+Demi keamanan akun Anda, sistem secara otomatis mewajibkan verifikasi OTP Email dan pembuatan password baru saat login pertama kali atau setelah password direset oleh Admin:
+1. **Tahap 1 — Verifikasi OTP Email:**
+   * Setelah berhasil login dengan NIP/password default, sistem akan mengarahkan Anda ke layar **Verifikasi OTP Email** dan mengirimkan kode **OTP 6 digit** ke alamat email perusahaan Anda yang terdaftar.
+   * Masukkan 6 digit kode OTP tersebut lalu klik **"Verifikasi OTP"**.
+   * Masa berlaku kode OTP adalah **1 menit** (60 detik) dengan batas maksimal **5 kali percobaan salah**. Jika waktu habis, Anda dapat menekan tombol **"Kirim Ulang OTP"** setelah jeda tunggu (*cooldown*) **60 detik**.
+2. **Tahap 2 — Set Password Baru:**
+   * Setelah OTP terverifikasi, masukkan **Password Baru** yang Anda inginkan (minimal **8 karakter**).
+   * Masukkan kembali pada kolom **Konfirmasi Password Baru**.
+   * Pastikan kata sandi baru **tidak sama dengan NIP default** Anda.
+   * Klik **"Simpan & Lanjutkan"**. Setelah berhasil disimpan, Anda langsung masuk ke halaman utama dan akan melihat pop-up **Pemberitahuan Etika Komunikasi**.
 
-> ⚠️ **Catatan Penting:** Harap catat dan ingat kata sandi baru Anda. Jangan meminjamkan akun atau membagikan kata sandi kepada orang lain.
+> ⚠️ **Catatan Penting:** Pastikan alamat email akun Anda aktif dan benar agar dapat menerima kode OTP. Harap catat dan ingat kata sandi baru Anda, serta jangan meminjamkan akun kepada orang lain.
 
 ---
 
 ### 3.3 Bagaimana Jika Lupa Kata Sandi?
-* Sistem GrowHub tidak memiliki tombol "Lupa Password Mandiri" guna mencegah pembobolan akun di komputer toko yang digunakan bergantian antar-shift.
-* Jika Anda lupa password, cukup hubungi **Supervisor Toko** atau **Admin IT/HR**. Admin dapat melakukan reset password Anda kembali ke NIP awal dalam 1 kali klik.
+* Sistem GrowHub tidak memiliki tombol "Lupa Password Mandiri" untuk karyawan guna mencegah pembobolan akun di komputer user yang mungkin digunakan bergantian.
+* Jika Anda lupa password, hubungi **Admin IT/HR**. Admin dapat mereset password Anda kembali ke NIP awal dalam 1 kali klik melalui menu *User Management*.
+* Saat login kembali menggunakan NIP tersebut, Anda akan diminta melewati alur **Verifikasi OTP Email** dan membuat password baru seperti pada Bagian 3.2.
 
 ---
 
@@ -92,60 +94,56 @@ Demi keamanan akun Anda, sistem secara otomatis mewajibkan pembuatan password ba
 Antarmuka GrowHub dirancang modern, rapi, dan mudah dinavigasi:
 
 ```
-┌──────────────┬──────────────────────────────────────────────────────────┐
-│  🌱 GrowHub  │ 🔍 Cari materi...              🔥 5 Hari  ⭐ 340 Pts [A]  │
-├──────────────┼──────────────────────────────────────────────────────────┤
-│ 🏠 Beranda   │                                                          │
-│ 📰 Feed      │                HALAMAN UTAMA / KONTEN                    │
-│ ✍️ Tulis     │                                                          │
-│ 🎓 Belajar   │                                                          │
-│ 👥 Komunitas │                                                          │
-│ 🏆 Peringkat │                                                          │
-│ 🔖 Tersimpan │                                                          │
-│ ❓ Bantuan   │                                                          │
-│              │                                                          │
-│ 🏷️ [TAB]     │  (Klik Tab Pita Penanda Buku untuk Melebarkan Layar!)     │
-└──────────────┴──────────────────────────────────────────────────────────┘
+┌──────────────┬───────────────────────────────────────────────────────────────┐
+│  🌱 GrowHub  │ ⭐ 43 Pts  🔥 14 Days  🏅 Lv.1  [+ Upload Content]  🔔  [AG]  │
+├──────────────┼───────────────────────────────────────────────────────────────┤
+│ 🏠 Home      │                                                               │
+│ 📖 Feed      │                 HALAMAN UTAMA / KONTEN                        │
+│ 🎛️ Dashboard │                                                               │
+│ 🎓 Learning  │                                                               │
+│ 👥 Community │                                                               │
+│ 🔖 Saved     │                                                               │
+│ 🕘 History   │                                                               │
+│ 🏆 Leaderbd  │                                                               │
+│              │                                                               │
+│ 🏷️ [<]       │   (Klik Tab Pita Penanda Buku untuk Melipat / Membuka Menu!)  │
+└──────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
 ### 4.1 Bilah Atas (Header Bar)
-* **Kolom Pencarian:** Cari topik, solusi masalah kasir, tips display barang, atau SOP kerja hanya dengan mengetik kata kunci.
-* **🔥 Api Streak:** Menghitung berapa hari berturut-turut Anda aktif menggunakan GrowHub.
-* **⭐ Total Poin & Level:** Menampilkan saldo poin terkumpul dan level gelar Anda saat ini.
-* **🔔 Lonceng Notifikasi:** Pemberitahuan instan saat artikel Anda disukai, dikomentari rekan, atau diverifikasi oleh reviewer.
-* **Foto Profil:** Menu untuk membuka profil diri atau keluar sistem (*Logout*).
+* **⭐ Total Poin (`Pts`), 🔥 Api Streak (`Days`), & 🏅 Level (`Lv.X`):** Indikator progres gamifikasi Anda secara *real-time* (diklik langsung menuju **My Dashboard**).
+* **➕ Tombol `+ Upload Content`:** Akses cepat dari halaman mana pun untuk membuka formulir unggah konten baru (`/create`).
+* **🛡️ Tombol `Reviewer`** *(Khusus Reviewer/Admin)*: Pintasan langsung ke portal kurasi **Content Validation** (`/review`).
+* **🔔 Lonceng Notifikasi:** Pemberitahuan instan saat artikel Anda disukai, dikomentari rekan, diverifikasi reviewer, atau menerima bonus poin (`/notifications`).
+* **👤 Menu Profil Pengguna (Pojok Kanan Atas):** Klik nama/avatar Anda untuk mengakses **My Profile**, **My Dashboard & Points**, **My Contributions**, serta keluar sistem (**Sign Out (Logout)**).
 
 ---
 
 ### 4.2 Bilah Menu Samping (Sidebar) yang Terstruktur
-Menu navigasi samping dikelompokkan ke dalam beberapa bagian yang jelas:
+Menu navigasi samping dikelompokkan sesuai bagian yang tampil di aplikasi:
 
-1. **Main Menu (Menu Utama):**
-   * **🏠 Home (Beranda):** Sambutan personal, ringkasan capaian pribadi, artikel terpopuler, dan pemenang poin minggu ini.
-   * **📰 Knowledge Feed:** Linimasa artikel, tips trik, foto pajangan produk, dan diskusi rekan kerja dari seluruh cabang.
-   * **📊 My Dashboard:** Dasbor pribadi lengkap dengan grafik perolehan poin harian, kalender streak, dan lencana capaian.
+1. **MAIN MENU (Menu Utama):**
+   * **🏠 Home:** Sambutan personal, ringkasan capaian & *Current Level*, daftar *Top This Week*, kategori pengetahuan, modul rekomendasi, *Trending & Most Helpful*, serta **3 konten yang terakhir Anda lihat (*Recently Viewed*)** lengkap dengan tautan **View More** ke *History Content*.
+   * **📖 Knowledge Feed:** Linimasa artikel, tips kerja, dokumentasi visual, dan diskusi antarkaryawan, lengkap dengan kolom **pencarian kata kunci/`#tag`**, filter **8 kategori**, filter tipe media (*All*, *Photos / Images*, *Video Sharing*, *Documents / SOP*), dan pengurutan.
+   * **🎛️ My Dashboard:** Dasbor pribadi lengkap dengan kartu *Skill Level*, *Daily Consistency*, ringkasan poin, grafik tren 30 hari, *Badges & Achievements* (8 lencana), serta riwayat buku besar mutasi poin (*Recent Points Ledger*).
    * **🎓 Learning Center:** Modul kursus mandiri (*micro-learning*) untuk mengasah keterampilan kerja.
-   * **👥 Communities:** Forum kelompok diskusi berdasarkan bidang atau minat karyawan.
+   * **👥 Communities:** Forum kelompok diskusi berdasarkan bidang kerja atau minat karyawan.
    * **🔖 Saved:** Tempat menyimpan materi favorit agar mudah ditemukan kembali.
+   * **🕘 History Content:** Daftar lengkap konten terbit yang pernah Anda buka/baca, diurutkan dari yang terakhir dibuka, lengkap dengan fitur pencarian.
    * **🏆 Leaderboard:** Papan peringkat karyawan paling aktif dan inspiratif.
 
-2. **My Workspace (Ruang Kerja Saya):**
-   * **📂 My Contributions:** Tempat mengelola seluruh artikel yang pernah Anda buat (draf, dalam peninjauan, terbit, atau butuh revisi).
+2. **MY WORKSPACE (Ruang Kerja Saya):**
+   * **✏️ My Contributions:** Tempat mengelola seluruh artikel yang pernah Anda buat (*All*, *Published*, *In Review*, *Needs Revision*, dan *Drafts*).
 
-3. **Administration (Khusus Reviewer & Admin):**
-   * **🛡️ Content Validation:** Portal kurasi bagi Reviewer untuk memvalidasi kiriman artikel.
-   * **👥 User Management:** Portal Admin untuk mengelola akun karyawan.
-   * **✨ Point Settings:** Pengaturan bobot poin per aktivitas dan batas harian.
-   * **📈 Level Settings:** Pengaturan jenjang tingkatan level, ambang poin, dan desain lencana.
-   * **🏆 Rank Settings:** Pengaturan batas kuota peringkat teratas (*Top Ranks*) yang tampil di Leaderboard dan Beranda.
+3. **ADMINISTRATION (Khusus Reviewer & Administrator):**
+   * **🛡️ Content Validation:** Portal kurasi bagi Reviewer/Admin untuk memvalidasi kiriman artikel.
+   * **👥 User Management** *(Admin)*: Portal Admin untuk mengelola akun karyawan.
+   * **✨ Point Settings** *(Admin)*: Pengaturan bobot poin per aktivitas, batas harian, dan saklar aktif/nonaktif.
+   * **📈 Level Settings** *(Admin)*: Pengaturan jenjang tingkatan level, ambang poin, dan desain lencana.
+   * **🏆 Rank Settings** *(Admin)*: Pengaturan batas kuota peringkat teratas (*Top Ranks*) dan jadwal reset Leaderboard.
+   * **⚖️ Policy and Validation Config** *(Admin)*: Pengaturan daftar aturan etika komunikasi, pesan pengurangan poin pelanggaran (`-1 Pts`), serta pratinjau pop-up pengumuman login.
 
-4. **Support & Profile:**
-   * **🔔 Notifications:** Daftar lengkap riwayat notifikasi Anda.
-   * **❓ Help & Support:** Panduan aturan poin, FAQ, dan form pengajuan tiket bantuan.
-   * **👤 Profile:** Portofolio pribadi, riwayat mutasi poin, dan pengaturan foto profil.
-
-5. **Mini Gamification Card:**
-   * Terletak di bagian paling bawah sidebar; menampilkan progress bar level Anda, persentase kemajuan, dan sisa poin yang dibutuhkan untuk naik ke level berikutnya secara seketika (*real-time*).
+> 💡 **Kenyamanan Tampilan (*Loading Skeleton*):** Selama proses pengambilan data dari server, seluruh halaman menampilkan animasi kerangka muat (*loading skeleton*) yang rapi agar ukuran tata letak (*layout*) tetap stabil tanpa pergeseran mendadak. *(Halaman bantuan lengkap **Help & Support** juga dapat diakses melalui rute `/help` untuk melihat panduan poin, FAQ, dan pengajuan tiket bantuan).*
 
 ---
 
@@ -175,16 +173,16 @@ flowchart LR
 ---
 
 ### 5.2 Langkah-Langkah Mengisi Formulir Konten
-1. Klik tombol hijau **"+ Share Knowledge"** atau buka menu **"Buat Konten"**.
+1. Klik tombol hijau **"+ Upload Content"** di Header Bar, **"+ Share Knowledge & Ideas"** di Home, atau **"+ Create Content"** / **"+ Create New Content"** di Feed/My Contributions.
 2. **Judul Konten (Wajib):**
    * Buat judul yang jelas dan informatif (maksimal 200 karakter).
    * *Contoh:* *"5 Cara Efektif Mengurangi Antrean Panjang di Kasir Saat Akhir Pekan"*.
 3. **Isi Pembahasan (Wajib):**
-   * Uraikan situasi yang dihadapi, langkah kerja praktis yang dilakukan, kendala, dan hasil positif yang diperoleh toko.
+   * Uraikan situasi yang dihadapi, langkah kerja praktis yang dilakukan, kendala, dan hasil positif yang diperoleh tim atau unit kerja.
    * Minimal 20 karakter. Anda dapat menggunakan format paragraf dan poin-poin.
 4. **Lampiran Media (Foto / Video / Berkas SOP):**
-   * Unggah dokumen pendukung seperti foto display barang (JPG/PNG), video tutorial singkat (MP4), atau dokumen pedoman (PDF, Word, Excel).
-   * Kapasitas maksimal: hingga **50 MB per file** dengan dukungan multi-upload.
+   * Unggah dokumen pendukung seperti foto dokumentasi kerja (JPG/PNG/WEBP), video tutorial singkat (MP4/WEBM), atau dokumen pedoman (PDF, Word, Excel, PowerPoint).
+   * Kapasitas maksimal: hingga **50 MB per file** (maks. 10 file) dengan dukungan multi-upload.
 5. **Kategori Konten (Wajib):**
    * *Best Practice* (Praktik Terbaik Teruji)
    * *Tips & Trick* (Kiat Praktis Kerja)
@@ -192,6 +190,8 @@ flowchart LR
    * *Innovation & Ideas* (Gagasan atau Usulan Inovasi Baru)
    * *Document / SOP* (Standar Operasional Prosedur Resmi)
    * *Success Story* (Kisah Sukses Pencapaian Target Kerja)
+   * *Group Discussion* (Diskusi Terbuka Antarkaryawan)
+   * *Video & Photo* (Berbagi Momen dan Pengetahuan Lewat Visual)
 6. **Hubungkan ke Komunitas (Opsional):**
    * Pilih komunitas spesifik jika materi ditujukan untuk kelompok tertentu, atau pilih *General* jika untuk seluruh karyawan.
 7. **Kata Kunci / Tag (#):**
@@ -240,10 +240,10 @@ GrowHub mengedepankan kolaborasi aktif antarkaryawan:
 
 Asah keterampilan operasional Anda melalui modul kursus singkat (*micro-learning*):
 1. Buka menu **Learning Center**.
-2. Pilih modul yang tersedia (misalnya: *Keunggulan Pelayanan Pelanggan*, *Teknik Penataan Visual Merchandising*, atau *Keselamatan & Kesehatan Kerja di Toko*).
+2. Pilih modul yang tersedia (misalnya: *Service Excellence 101*, *Data-Driven Analytics dengan Excel*, atau *Keamanan & Keselamatan Kerja*).
 3. Pelajari rangkuman materi, baca langkah kerja, dan tonton video tutorial yang disediakan.
-4. Jika telah memahami seluruh isi materi, klik tombol hijau **"Tandai Selesai" / "Complete Course"**.
-5. Sistem akan memberikan lencana centang hijau dan mentransfer **+15 hingga +35 Poin** langsung ke profil Anda!
+4. Jika telah memahami seluruh isi materi, klik tombol hijau **"Complete Course"** / **"Mark as Completed"**.
+5. Sistem akan memberikan lencana centang hijau dan mentransfer poin pembelajaran (bawaan **+15 Poin**, sesuai konfigurasi *Point Settings*) langsung ke profil Anda!
 
 ---
 
@@ -270,10 +270,10 @@ Kumpulkan poin sebanyak-banyaknya melalui aktivitas bermanfaat:
 | **Menulis Komentar Positif** | **+1 Poin** | Berpartisipasi dalam diskusi di tulisan rekan lain. |
 | **Membaca Artikel Rekan Kerja** | **+1 Poin** | Menambah wawasan dari artikel di feed. |
 | **Membagikan Materi (Share)** | **+1 Poin** | Menyebarkan artikel bermanfaat ke rekan kerja. |
-| **Menuntaskan Kursus Pelatihan** | **+15 s/d +35 Poin** | Menyelesaikan modul di Learning Center. |
+| **Menuntaskan Kursus Pelatihan** | **+15 Poin** | Menyelesaikan modul di Learning Center (sesuai aturan *Point Settings*). |
 | **Bonus Mingguan (Streak 7 Hari) 🔥** | **+15 Poin Ekstra** | Bonus ekstra setiap aktif 7 hari berturut-turut! |
 
-> 💡 **Informasi Tambahan:** Besaran poin dan kuota harian (*daily caps*) dapat disesuaikan sewaktu-waktu oleh Manajemen/Administrator perusahaan (misalnya ada program festival poin ganda pada bulan tertentu).
+> 💡 **Informasi Tambahan:** Besaran poin dan kuota harian (*daily caps*) dapat disesuaikan sewaktu-waktu oleh Administrator melalui *Point Settings*. Sebaliknya, pelanggaran etika komunikasi pada kolom komentar dapat menyebabkan pengurangan poin otomatis sesuai kebijakan aktif.
 
 ---
 
@@ -323,14 +323,15 @@ Buka menu **Leaderboard** untuk melihat prestasi Anda dan rekan-rekan kerja:
 ## 11. Mengelola Profil Pribadi & Foto Avatar
 
 Halaman profil adalah portofolio keaktifan Anda di hadapan seluruh rekan kerja:
-1. Klik menu **Profile** di sidebar atau klik nama Anda di pojok kanan atas.
-2. **Ganti Foto Profil (Avatar):**
+1. Klik nama Anda di pojok kanan atas *Header Bar* lalu pilih **My Profile** (`/profile`).
+2. **Perbarui Data Profil (`Edit Profile`):** Anda dapat memperbarui **Nama Lengkap**, **Alamat Email** *(wajib diisi untuk keperluan pengiriman OTP Email)*, **Lokasi Cabang/Kantor**, dan **Bio**.
+3. **Ganti Foto Profil (Avatar):**
    * Klik ikon **Kamera** pada lingkaran foto profil Anda.
-   * Pilih foto resmi atau foto seragam kerja terbaik Anda dari komputer/ponsel. Foto akan langsung terpasang!
-3. **Melihat Statistik Pribadi:**
-   * Pantau berapa total like yang sudah Anda terima, jumlah artikel yang telah terbit, dan modul kursus yang telah diselesaikan.
-4. **Riwayat Buku Besar Poin (Point Transactions):**
-   * Di bagian bawah profil, Anda dapat melihat transparansi riwayat mutasi poin (kapan poin masuk, dari aktivitas apa, dan berapa jumlahnya).
+   * Pilih foto resmi atau foto kerja terbaik Anda (format gambar JPG/PNG/GIF/WEBP, ukuran maksimal **3 MB**). Foto akan langsung terpasang!
+4. **Ubah Password (Khusus Administrator / Status Wajib Ganti Password):**
+   * Administrator dapat mengganti password melalui tab **Edit Profile** menggunakan verifikasi **Password Saat Ini** dan **OTP Email 6 digit** yang dikirim ke email terdaftar. Bagi karyawan reguler, reset password tetap dilakukan secara terpusat oleh Administrator.
+5. **Melihat Statistik Pribadi & Konten Terbit:**
+   * Pantau ringkasan `PUBLISHED POSTS`, `TOTAL LIKES EARNED`, `COURSES COMPLETED`, `COMMUNITIES JOINED`, serta daftar konten yang telah Anda terbitkan. Untuk rincian mutasi poin masuk dan pengurangan poin (*Recent Points Ledger*), buka menu **My Dashboard**.
 
 ---
 
@@ -346,11 +347,11 @@ Sebagai kurator, Anda bertugas memastikan kualitas informasi yang beredar di per
 3. Tinjau isi tulisan, kejelasan panduan, serta kesesuaian lampiran foto/video dengan SOP perusahaan.
 4. Ambil keputusan:
    * **Approve & Publish:** Klik tombol hijau jika konten berkualitas. Artikel seketika terbit di feed publik, penulis mendapatkan **+25 Poin**, dan Reviewer mendapatkan poin evaluasi.
-   * **Reject / Request Revision:** Jika artikel butuh perbaikan, klik tombol merah. **Wajib tuliskan catatan revisi yang jelas** (misal: *"Mohon tambahkan rincian cara merapikan display pada rak nomor 2"*). Catatan ini akan tampil di form edit penulis.
+   * **Reject (Needs Revision):** Jika artikel butuh perbaikan, klik tombol merah `Reject (Needs Revision)`. **Wajib tuliskan catatan revisi yang jelas** (misal: *"Mohon lengkapi detail langkah kerja pada poin nomor 2"*). Catatan ini akan tampil di form edit penulis.
 
 ---
 
-## 13. Panduan Khusus Administrator (User, Point, Level & Rank Settings)
+## 13. Panduan Khusus Administrator (User, Point, Level, Rank & Policy Settings)
 
 *(Bagian ini khusus untuk tim IT, HC/HR, dan PIC Sistem dengan hak akses Administrator)*
 
@@ -374,8 +375,8 @@ Diakses melalui menu **"Point Settings"** (`/admin/point-rules`):
 
 ---
 
-### 13.3 Pengaturan Jenjang Level Dinamis (Level Settings) -> Ongoing Development Phase
-Fitur terbaru yang diakses melalui menu **"Level Settings"** (`/admin/level-rules`):
+### 13.3 Pengaturan Jenjang Level Dinamis (Level Settings)
+Diakses melalui menu **"Level Settings"** (`/admin/level-rules`):
 * **Kelola Tingkatan Level:** Ubah nama level, tingkatan tier, serta ambang batas minimal poin (*min points*) yang harus diraih karyawan untuk mencapai level tersebut.
 * **Kustomisasi Tampilan Lencana (Badge):** Pilih ikon lencana (Sprout, Leaf, Tree, Flame, Award, Star, Sparkles, Crown) dan warna representatif untuk setiap level.
 * **Tambah Level Baru:** Tambahkan tingkatan level baru di atas level yang sudah ada jika perusahaan ingin memperpanjang jenjang karir gamifikasi karyawan.
@@ -384,8 +385,8 @@ Fitur terbaru yang diakses melalui menu **"Level Settings"** (`/admin/level-rule
 
 ---
 
-### 13.4 Pengaturan Batas Peringkat & Jadwal Reset (Rank Settings) Ongoing Development Phase
-Fitur terbaru yang diakses melalui menu **"Rank Settings"** (`/admin/rank-settings`):
+### 13.4 Pengaturan Batas Peringkat & Jadwal Reset (Rank Settings)
+Diakses melalui menu **"Rank Settings"** (`/admin/rank-settings`):
 
 1. **Jadwal & Siklus Reset Leaderboard (`reset_frequency`):**
    * Admin memiliki wewenang penuh untuk mengatur kapan skor Leaderboard direset ulang atau membiarkannya berjalan tanpa pernah direset:
@@ -423,10 +424,54 @@ Fitur terbaru yang diakses melalui menu **"Rank Settings"** (`/admin/rank-settin
 
 ---
 
+### 13.5 Pengaturan Kebijakan Etika & Moderasi (`Policy and Validation Config`)
+Diakses melalui menu **"Policy and Validation Config"** (`/admin/policy-config`):
+* **Kelola Daftar Aturan Etika Komunikasi:** Tambah, ubah, simpan massal (*batch save*), atau hapus poin aturan pelanggaran (`title`, `description`, `sort_order`). Minimal 1 aturan harus selalu dipertahankan di sistem.
+* **Konfigurasi Punishment Poin Dinamis:** Besaran pengurangan poin tidak lagi statis -1 Pts untuk semua jenis pelanggaran. Admin dapat mengatur sanksi poin secara spesifik untuk masing-masing pelanggaran:
+  - **Tingkat Berat (High):** Pengurangan poin lebih besar (misal: `-5 Pts` untuk kebocoran data rahasia atau ujaran kebencian/SARA).
+  - **Tingkat Sedang (Medium):** Pengurangan poin menengah (misal: `-3 Pts` untuk spamming/manipulasi poin, `-2 Pts` untuk promosi pribadi).
+  - **Tingkat Ringan (Low):** Pengurangan poin standar (misal: `-1 Pts` untuk informasi yang kurang akurat/tidak resmi).
+* **Pratinjau Pop-up Login:** Gunakan fitur pratinjau untuk melihat tampilan **Pemberitahuan Etika Komunikasi** lengkap dengan label sanksi poin per pelanggaran yang wajib dibaca dan disetujui (*Saya Mengerti & Setuju*) oleh setiap karyawan setelah login.
+* **Moderasi Komentar Pelanggaran:** Saat Admin menghapus komentar karyawan lain pada detail konten, Admin wajib memilih salah satu alasan pelanggaran dari daftar aktif ini. Sistem otomatis menghapus komentar beserta balasannya, memotong poin pemilik komentar sesuai besaran sanksi aturan tersebut (`policy_violation`), mengirim notifikasi in-app, serta mengirim email pemberitahuan pelanggaran resmi ke email karyawan.
+
+### 13.6 Manajemen Kontak Helper & Layanan Bantuan (`Helper Contacts`)
+Diakses melalui menu samping Administrator **"Helper Contacts"** (`/admin/helper-contacts`) atau melalui tombol **"Kelola Kontak Helper"** di halaman Help & Support:
+* **Fungsi Utama:** Mengelola saluran bantuan resmi (Helpdesk IT, Human Capital Care, Hotline Darurat) yang dapat dihubungi karyawan.
+* **Tampil Otomatis di Halaman Login & Support:** Setiap kontak dengan status **Aktif** akan otomatis ditampilkan di:
+  1. **Halaman Login (`/login`):** Pada kotak bantuan *"Butuh Bantuan Login / Kendala Akun?"* sehingga karyawan yang lupa password atau belum menerima OTP dapat langsung menghubungi kontak bantuan via WhatsApp, Email, atau Telepon tanpa harus bisa login terlebih dahulu.
+  2. **Halaman Help & Support (`/help`):** Ditampilkan sebagai kartu kontak bantuan resmi berfitur tombol aksi langsung (*Chat WhatsApp*, *Kirim Email*, *Hubungi Telepon*).
+* **Fitur Manajemen Admin:**
+  - **Tambah Kontak Helper:** Masukkan nama layanan/PIC, jabatan, jenis saluran (*WhatsApp*, *Email*, *Telepon*, *Telegram*), nomor/alamat kontak, jam operasional, dan keterangan bantuan.
+  - **Ubah & Nonaktifkan:** Nonaktifkan sementara kontak helper saat di luar jam dinas hanya dengan 1-klik tombol toggle.
+  - **Reset Default:** Kembalikan konfigurasi kontak helper ke 3 kontak bawaan sistem kapan pun dibutuhkan.
+
+### 13.7 Pengaturan Email & Server SMTP (`Mail & SMTP Settings`)
+Diakses melalui menu samping Administrator **"Mail Settings"** (`/admin/mail-settings`):
+* **Fungsi Utama:** Memberikan wewenang kepada Administrator untuk mengonfigurasi kredensial SMTP server secara visual langsung dari antarmuka web GrowHub tanpa perlu mengedit file server secara manual.
+* **Sinkronisasi Otomatis Database & File `.env`:**
+  - Setiap perubahan yang disimpan oleh Admin akan langsung memperbarui data di tabel database `mail_settings` dan baris konfigurasi `MAIL_*` pada file `backend/.env`.
+  - Konfigurasi runtime Laravel langsung diperbarui seketika dan cache konfigurasi dibersihkan (`config:clear`) sehingga seluruh pengiriman email (seperti OTP ganti password dan email notifikasi pelanggaran etika) langsung menggunakan kredensial baru.
+* **Kolom Pengaturan yang Dapat Dikonfigurasi:**
+  1. **Mail Driver / Mailer (`MAIL_MAILER`):** `smtp`, `sendmail`, `log`, dsb.
+  2. **Mail Scheme / Enkripsi (`MAIL_SCHEME`):** `smtps` (untuk koneksi SSL port 465), `tls`, `ssl`, atau dikosongkan.
+  3. **SMTP Host Server (`MAIL_HOST`):** Alamat server SMTP (contoh: `smtp-1.rcoid.com` atau `smtp.gmail.com`).
+  4. **SMTP Port (`MAIL_PORT`):** Port server (contoh: `465` untuk SMTPS/SSL, `587` untuk STARTTLS).
+  5. **SMTP Username (`MAIL_USERNAME`):** Username/alamat akun email login SMTP (contoh: `noreply.pepito@rcoid.com`).
+  6. **SMTP Password (`MAIL_PASSWORD`):** Kata sandi akun email SMTP. Kolom ini dilengkapi tombol intip (*show/hide*) dan dapat dikosongkan jika Admin hanya ingin mengubah host/port tanpa merubah password lama yang tersimpan.
+  7. **Email Pengirim / From Address (`MAIL_FROM_ADDRESS`):** Alamat email resmi pengirim (contoh: `noreply.pepito@rcoid.com`).
+  8. **Nama Pengirim / From Name (`MAIL_FROM_NAME`):** Nama identitas sistem yang terlihat di kotak masuk penerima (contoh: `GrowHub- ${APP_NAME}`).
+* **Fitur Uji Coba Pengiriman Email (*Live SMTP Test Tool*):**
+  - Pada sisi kanan halaman konfigurasi terdapat panel **Uji Coba Pengiriman Email**.
+  - Masukkan alamat email tujuan pengujian lalu tekan **"Kirim Email Uji Coba"**.
+  - Sistem akan langsung mencoba menghubungkan socket ke SMTP host dan port yang dikonfigurasi serta mengirimkan email uji coba berformat resmi GrowHub.
+  - Jika terjadi kendala koneksi (misal port diblokir firewall, salah password, atau hostname tidak dikenal), sistem akan menampilkan pesan galat (*diagnostic error*) secara terperinci untuk mempermudah investigasi tim IT.
+
+---
+
 ## 14. Pertanyaan yang Sering Diajukan (FAQ) & Bantuan
 
-#### 1. "Saya tidak sengaja salah memasukkan kata sandi hingga terkunci, apa yang harus saya lakukan?"
-> **Solusi:** Hubungi Supervisor Toko atau Admin IT/HR cabang Anda. Admin dapat mereset kata sandi Anda kembali ke NIP awal dalam sekejap.
+#### 1. "Saya tidak sengaja salah memasukkan kata sandi hingga terkunci, atau tidak menerima kode OTP, apa yang harus saya lakukan?"
+> **Solusi:** Hubungi Supervisor atau Admin IT/HR perusahaan Anda. Admin dapat mereset kata sandi Anda kembali ke NIP awal dan memastikan alamat email Anda sudah terdaftar dengan benar agar kode OTP verifikasi 6 digit dapat terkirim saat Anda login ulang.
 
 #### 2. "Berapa lama waktu peninjauan artikel oleh Reviewer?"
 > **Solusi:** Kurasi artikel biasanya berlangsung antara 1x24 jam hingga 2x24 jam kerja. Anda akan menerima notifikasi otomatis ketika artikel disetujui atau memerlukan revisi.
@@ -437,24 +482,31 @@ Fitur terbaru yang diakses melalui menu **"Rank Settings"** (`/admin/rank-settin
 #### 4. "Mengapa tulisan saya berstatus 'Needs Revision' dan bagaimana cara memperbaikinya?"
 > **Solusi:** Buka menu **My Contributions** > tab **Needs Revision** > klik **Edit**. Di bagian atas formulir akan tampil kotak merah berisi masukan dari kurator. Perbaiki sesuai petunjuk lalu klik **"Resubmit for Review"**.
 
-#### 5. "Berapa kapasitas maksimal lampiran file yang bisa saya unggah?"
-> **Solusi:** Maksimal **50 MB per berkas**. Mendukung foto (JPG, PNG, WEBP), video (MP4, WEBM), dan dokumen SOP (PDF, DOCX, XLSX, PPTX).
+#### 5. "Berapa kapasitas maksimal lampiran file konten dan foto profil yang bisa saya unggah?"
+> **Solusi:** Lampiran file konten maksimal **50 MB per berkas** (mendukung foto JPG/PNG/WEBP, video MP4/WEBM, dan dokumen SOP PDF/DOCX/XLSX/PPTX). Sementara untuk unggah foto profil (avatar), ukuran maksimal adalah **3 MB**.
 
-#### 6. "Bagaimana cara menyampaikan kendala teknis atau saran perbaikan aplikasi?"
-> **Solusi:** Buka menu **Help & Support** di bilah navigasi kiri, isi formulir **Submit Support Ticket**, lalu klik tombol kirim. Anda dapat memantau status penyelesaian tiket langsung di halaman tersebut.
+#### 6. "Bagaimana cara melihat kembali artikel yang pernah saya baca sebelumnya?"
+> **Solusi:** Anda dapat melihat **3 konten terakhir** pada bagian **Recently Viewed** di halaman **Home** dan klik **View More**, atau langsung membuka menu **History Content** (`/history`) di sidebar untuk melihat seluruh riwayat baca beserta pencarian kata kunci.
+
+#### 7. "Bagaimana cara menyampaikan kendala teknis atau saran perbaikan aplikasi?"
+> **Solusi:** Buka halaman **Help & Support** (`/help`), isi formulir pengajuan tiket bantuan, lalu klik tombol kirim. Anda dapat memantau status penyelesaian tiket langsung di halaman tersebut.
 
 ---
 
 ## 15. Etika & Aturan Berbagi di GrowHub
 
+Setiap kali berhasil masuk ke GrowHub, pengguna wajib membaca dan menyetujui pop-up **Pemberitahuan Etika Komunikasi** (*Kebijakan Pelanggaran*) yang mencakup ketentuan utama berikut:
+
 1. 🔒 **Jaga Kerahasiaan Data Perusahaan & Pelanggan:**
-   * Dilarang keras mengunggah nomor kartu kredit/debit pelanggan, PIN mesin kasir, data pribadi konsumen, atau laporan keuangan internal yang bersifat rahasia.
-2. 🤝 **Saling Menghargai & Berbahasa Positif:**
-   * Berikan kritik yang santun dan membangun di kolom komentar. Hindari perdebatan yang menyinggung antartoko/cabang atau isu SARA.
-3. 📸 **Dokumentasi Asli & Relevan:**
-   * Foto atau video yang diunggah harus berkaitan dengan kegiatan kerja operasional toko atau inovasi kerja yang sah.
-4. 🚀 **Jujur dan Sportif:**
-   * Raih poin dan tingkatkan level Anda secara alami dengan berbagi ilmu yang bermanfaat, bukan melalui cara spamming.
+   * Dilarang keras mengunggah nomor kartu pembayaran, PIN kasir, data pribadi konsumen, atau laporan keuangan internal yang bersifat rahasia.
+2. 🤝 **Saling Menghargai, Anti-SARA & Bebas Pelecehan:**
+   * Berikan kritik yang santun dan membangun di kolom komentar. Dilarang menggunakan kata-kata kasar, merendahkan rekan kerja atau cabang lain, serta menyebarkan konten bermuatan SARA.
+3. 🚫 **Bebas Spam, Iklan Pribadi & Manipulasi Poin:**
+   * Dilarang mengunggah konten berulang tanpa makna, komentar spam, promosi jualan pribadi di luar pekerjaan, maupun aktivitas fiktif untuk mengejar poin gamifikasi.
+4. 📸 **Dokumentasi Asli, Akurat & Relevan:**
+   * Foto, video, atau SOP yang dibagikan harus sah, faktual, dan tidak menyesatkan.
+
+> ⚖️ **Sanksi Pelanggaran:** Komentar atau interaksi yang melanggar daftar kebijakan aktif akan dihapus oleh Administrator dengan catatan alasan pelanggaran, diikuti **pengurangan poin gamifikasi otomatis**, notifikasi di aplikasi, serta **email pemberitahuan pelanggaran**.
 
 ---
 

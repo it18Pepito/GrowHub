@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\AdminHelperContactController;
 use App\Http\Controllers\Api\AdminLevelRuleController;
+use App\Http\Controllers\Api\AdminMailSettingController;
 use App\Http\Controllers\Api\AdminPointRuleController;
 use App\Http\Controllers\Api\AdminPolicyConfigController;
 use App\Http\Controllers\Api\AdminRankSettingController;
@@ -24,6 +26,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:30,1')->name('login');
+Route::get('/support/helpers', [SupportController::class, 'helpers']);
+Route::get('/helper-contacts', [SupportController::class, 'helpers']);
 
 Route::middleware(['auth:sanctum', 'track.activity'])->group(function () {
     // Auth
@@ -135,6 +139,19 @@ Route::middleware(['auth:sanctum', 'track.activity'])->group(function () {
             Route::put('/policy-configs/batch', [AdminPolicyConfigController::class, 'batchUpdate']);
             Route::put('/policy-configs/{ethicsPolicy}', [AdminPolicyConfigController::class, 'update']);
             Route::delete('/policy-configs/{ethicsPolicy}', [AdminPolicyConfigController::class, 'destroy']);
+
+            // Helper & Support Contact Management
+            Route::get('/helper-contacts', [AdminHelperContactController::class, 'index']);
+            Route::post('/helper-contacts', [AdminHelperContactController::class, 'store']);
+            Route::post('/helper-contacts/reset-defaults', [AdminHelperContactController::class, 'resetDefaults']);
+            Route::put('/helper-contacts/{helperContact}', [AdminHelperContactController::class, 'update']);
+            Route::post('/helper-contacts/{helperContact}/toggle', [AdminHelperContactController::class, 'toggle']);
+            Route::delete('/helper-contacts/{helperContact}', [AdminHelperContactController::class, 'destroy']);
+
+            // Mail & SMTP Settings
+            Route::get('/mail-settings', [AdminMailSettingController::class, 'index']);
+            Route::put('/mail-settings', [AdminMailSettingController::class, 'update']);
+            Route::post('/mail-settings/test', [AdminMailSettingController::class, 'sendTestMail']);
         });
     });
 });

@@ -9,7 +9,7 @@
         </div>
         <h1 class="page-title">Policy and Validation Config</h1>
         <p class="page-subtitle">
-          Kelola daftar pelanggaran etika komunikasi yang tampil pada pop-up modal pemberitahuan setiap user login (pengurangan poin standar: -1 Pts per pelanggaran).
+          Kelola daftar pelanggaran etika komunikasi yang tampil pada pop-up modal login serta tentukan besaran punishment pengurangan poin yang fleksibel sesuai jenis dan tingkat keparahan pelanggaran.
         </p>
       </div>
 
@@ -59,24 +59,16 @@
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon-wrapper bg-red-soft">
-          <TrendingDown :size="20" class="text-red" />
-        </div>
-        <div class="stat-meta">
-          <span class="stat-label">Konsekuensi Poin Default</span>
-          <span class="stat-val text-red">-1 Pts</span>
-        </div>
-      </div>
+
     </div>
 
     <!-- Policy List Editor -->
     <div class="card policy-editor-card">
       <div class="policy-card-header">
         <div>
-          <h2 class="card-title">Daftar Pelanggaran Etika Komunikasi</h2>
+          <h2 class="card-title">Daftar Pelanggaran &amp; Konfigurasi Punishment Poin</h2>
           <p class="small muted">
-            Ubah langsung judul, deskripsi, atau urutan di bawah ini lalu klik <strong>Simpan Perubahan</strong>.
+            Sesuaikan judul pelanggaran, tingkat keparahan, punishment pengurangan poin, atau urutan di bawah ini lalu klik <strong>Simpan Perubahan</strong>.
           </p>
         </div>
         <span v-if="modifiedCount > 0" class="badge badge-amber">
@@ -89,7 +81,9 @@
           <div class="policy-row-top">
             <div class="skeleton" style="height: 40px;"></div>
             <div class="skeleton" style="height: 40px;"></div>
-            <div class="skeleton sk-btn" style="width: 88px; height: 40px;"></div>
+            <div class="skeleton" style="height: 40px;"></div>
+            <div class="skeleton" style="height: 40px;"></div>
+            <div class="skeleton sk-btn" style="width: 40px; height: 40px;"></div>
           </div>
           <div class="skeleton" style="height: 62px;"></div>
         </div>
@@ -111,7 +105,7 @@
           }"
         >
           <div class="policy-row-top">
-            <!-- Order + Active Toggle -->
+            <!-- Order -->
             <div class="policy-order-group">
               <label class="small-label">Urutan</label>
               <input
@@ -123,6 +117,7 @@
               />
             </div>
 
+            <!-- Title -->
             <div class="policy-title-group">
               <label class="small-label">Judul / Jenis Pelanggaran</label>
               <input
@@ -134,6 +129,34 @@
               />
             </div>
 
+            <!-- Severity -->
+            <div class="policy-severity-group">
+              <label class="small-label">Tingkat</label>
+              <select v-model="item.severity" class="input select-severity">
+                <option value="low">Low (Ringan)</option>
+                <option value="medium">Medium (Sedang)</option>
+                <option value="high">High (Berat)</option>
+              </select>
+            </div>
+
+            <!-- Point Punishment Deduction -->
+            <div class="policy-deduction-group">
+              <label class="small-label">Punishment Poin</label>
+              <div class="deduction-input-wrap">
+                <span class="deduction-prefix">-</span>
+                <input
+                  v-model.number="item.point_deduction"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  class="input input-deduction"
+                  placeholder="1"
+                />
+                <span class="deduction-suffix">Pts</span>
+              </div>
+            </div>
+
+            <!-- Delete Action -->
             <div class="policy-actions-group">
               <button
                 type="button"
@@ -186,6 +209,34 @@
                 placeholder="Contoh: Penyalahgunaan Akun Rekan Kerja"
                 required
               />
+            </div>
+
+            <div class="grid-2-col">
+              <div class="field">
+                <label class="label">Tingkat Keparahan</label>
+                <select v-model="createForm.severity" class="input">
+                  <option value="low">Low (Ringan)</option>
+                  <option value="medium">Medium (Sedang)</option>
+                  <option value="high">High (Berat)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="label">Punishment Poin (Pengurangan) <span class="text-red">*</span></label>
+                <div class="deduction-input-wrap">
+                  <span class="deduction-prefix">-</span>
+                  <input
+                    v-model.number="createForm.point_deduction"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    class="input input-deduction"
+                    placeholder="Contoh: 3"
+                    required
+                  />
+                  <span class="deduction-suffix">Pts</span>
+                </div>
+              </div>
             </div>
 
             <div class="field">
@@ -272,6 +323,8 @@ const deleteTarget = ref(null)
 const createForm = reactive({
   title: '',
   description: '',
+  point_deduction: 2,
+  severity: 'medium',
 })
 
 const snapshotMap = (list) => {
@@ -281,13 +334,19 @@ const snapshotMap = (list) => {
       title: p.title,
       description: p.description,
       sort_order: Number(p.sort_order),
+      point_deduction: Number(p.point_deduction || 1),
+      severity: p.severity || 'medium',
     })
   }
   return map
 }
 
 const applyPayload = (data) => {
-  policies.value = (data.policies || []).map((p) => ({ ...p }))
+  policies.value = (data.policies || []).map((p) => ({
+    ...p,
+    point_deduction: Number(p.point_deduction || 1),
+    severity: p.severity || 'medium',
+  }))
   originalSnapshots.value = snapshotMap(policies.value)
   stats.value = data.stats || {}
 }
@@ -297,6 +356,8 @@ const hasChanged = (item) => {
     title: item.title,
     description: item.description,
     sort_order: Number(item.sort_order),
+    point_deduction: Number(item.point_deduction || 1),
+    severity: item.severity || 'medium',
   })
   return originalSnapshots.value[item.id] !== curr
 }
@@ -326,6 +387,10 @@ const saveAllPolicies = async () => {
       toastStore.error('Judul dan penjelasan setiap aturan wajib diisi.')
       return
     }
+    if (!p.point_deduction || Number(p.point_deduction) < 1) {
+      toastStore.error('Punishment poin minimal adalah 1 Pts.')
+      return
+    }
   }
 
   saving.value = true
@@ -336,10 +401,12 @@ const saveAllPolicies = async () => {
         title: p.title.trim(),
         description: p.description.trim(),
         sort_order: Math.max(0, Number(p.sort_order) || 0),
+        point_deduction: Math.max(1, Number(p.point_deduction) || 1),
+        severity: p.severity || 'medium',
       })),
     })
     applyPayload(res.data)
-    toastStore.success(res.data.message || 'Konfigurasi Policy & Validation disimpan!')
+    toastStore.success(res.data.message || 'Konfigurasi Policy & Sanksi Poin disimpan!')
   } catch (err) {
     toastStore.error(err.response?.data?.message || 'Gagal menyimpan perubahan.')
   } finally {
@@ -350,6 +417,8 @@ const saveAllPolicies = async () => {
 const openCreateModal = () => {
   createForm.title = ''
   createForm.description = ''
+  createForm.point_deduction = 2
+  createForm.severity = 'medium'
   createModalOpen.value = true
 }
 
@@ -358,12 +427,18 @@ const submitCreate = async () => {
     toastStore.error('Judul dan penjelasan wajib diisi.')
     return
   }
+  if (!createForm.point_deduction || Number(createForm.point_deduction) < 1) {
+    toastStore.error('Punishment poin minimal adalah 1 Pts.')
+    return
+  }
 
   saving.value = true
   try {
     const res = await api.post('/admin/policy-configs', {
       title: createForm.title.trim(),
       description: createForm.description.trim(),
+      point_deduction: Math.max(1, Number(createForm.point_deduction) || 1),
+      severity: createForm.severity || 'medium',
     })
     applyPayload(res.data)
     createModalOpen.value = false

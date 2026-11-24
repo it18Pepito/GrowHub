@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\PasswordOtpMail;
+use App\Models\MailSetting;
 use App\Models\PasswordChangeOtp;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -64,6 +65,7 @@ class PasswordOtpService
         ]);
 
         try {
+            MailSetting::current()->applyRuntimeConfig();
             Mail::to($user->email)->send(new PasswordOtpMail($user, $otpCode, self::EXPIRES_MINUTES));
         } catch (\Throwable $e) {
             $record->delete();

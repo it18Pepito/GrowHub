@@ -535,7 +535,10 @@
                   :disabled="violationSubmitting"
                 />
                 <div class="violation-radio-content">
-                  <div class="violation-radio-title">{{ policy.title }}</div>
+                  <div class="violation-radio-top">
+                    <div class="violation-radio-title">{{ policy.title }}</div>
+                    <span class="violation-point-pill">-{{ policy.point_deduction || 1 }} Pts</span>
+                  </div>
                   <p v-if="policy.description" class="violation-radio-desc">{{ policy.description }}</p>
                 </div>
               </label>

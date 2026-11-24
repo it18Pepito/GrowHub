@@ -212,6 +212,15 @@
               >
                 Batal / Ganti Akun
               </button>
+
+              <button
+                type="button"
+                class="btn-helper-link text-center"
+                @click="isHelperOpen = true"
+              >
+                <Headphones :size="14" />
+                <span>Kendala kode OTP? Hubungi Kontak Helper</span>
+              </button>
             </div>
           </form>
 
@@ -395,6 +404,92 @@
               </button>
             </div>
           </div>
+
+          <!-- Helper & Support Contacts Section -->
+          <div class="login-helper-card">
+            <button
+              type="button"
+              class="login-helper-toggle"
+              @click="isHelperOpen = !isHelperOpen"
+              aria-label="Toggle helper contact details"
+            >
+              <div class="helper-toggle-left">
+                <div class="helper-icon-bubble">
+                  <Headphones :size="17" />
+                </div>
+                <div class="helper-toggle-text">
+                  <span class="helper-toggle-title">Butuh Bantuan Login / Kendala Akun?</span>
+                  <span class="helper-toggle-sub">Hubungi Kontak Helper &amp; IT Support GrowHub</span>
+                </div>
+              </div>
+              <ChevronDown :size="18" class="helper-chevron" :class="{ 'is-flipped': isHelperOpen }" />
+            </button>
+
+            <div v-if="isHelperOpen" class="login-helper-content">
+              <p class="small text-2 mb-3">
+                Jika lupa password, akun terkunci, atau belum menerima OTP, silakan hubungi tim helper resmi di bawah ini:
+              </p>
+
+              <div v-if="helperLoading" class="helper-loading-list stack" style="gap: 8px;">
+                <div v-for="n in 3" :key="`sk-hlp-${n}`" class="skeleton" style="height: 60px; border-radius: 12px;"></div>
+              </div>
+
+              <div v-else-if="helperContacts.length === 0" class="small muted text-center py-2">
+                Kontak helper belum dikonfigurasi oleh Administrator.
+              </div>
+
+              <div v-else class="helper-contacts-list stack" style="gap: 10px;">
+                <div
+                  v-for="contact in helperContacts"
+                  :key="contact.id"
+                  class="helper-contact-item"
+                >
+                  <div class="helper-channel-icon" :class="`channel-${contact.channel}`">
+                    <MessageCircle v-if="contact.channel === 'whatsapp'" :size="18" />
+                    <Mail v-else-if="contact.channel === 'email'" :size="18" />
+                    <PhoneCall v-else-if="contact.channel === 'phone'" :size="18" />
+                    <Send v-else-if="contact.channel === 'telegram'" :size="18" />
+                    <Headphones v-else :size="18" />
+                  </div>
+
+                  <div class="helper-details">
+                    <div class="helper-name-row">
+                      <span class="helper-name">{{ contact.name }}</span>
+                      <span class="helper-channel-badge" :class="`badge-${contact.channel}`">
+                        {{ getChannelLabel(contact.channel) }}
+                      </span>
+                    </div>
+
+                    <div v-if="contact.role_or_title" class="helper-role">{{ contact.role_or_title }}</div>
+
+                    <div v-if="contact.available_hours" class="helper-hours">
+                      <Clock :size="12" />
+                      <span>{{ contact.available_hours }}</span>
+                    </div>
+
+                    <p v-if="contact.description" class="helper-desc">{{ contact.description }}</p>
+
+                    <div class="helper-action-row">
+                      <a
+                        :href="getContactLink(contact)"
+                        :target="contact.channel === 'phone' ? '_self' : '_blank'"
+                        class="btn-contact-action"
+                        :class="`action-${contact.channel}`"
+                      >
+                        <MessageCircle v-if="contact.channel === 'whatsapp'" :size="14" />
+                        <Mail v-else-if="contact.channel === 'email'" :size="14" />
+                        <PhoneCall v-else-if="contact.channel === 'phone'" :size="14" />
+                        <Send v-else-if="contact.channel === 'telegram'" :size="14" />
+                        <Headphones v-else :size="14" />
+                        <span>{{ contact.contact_value }}</span>
+                        <ExternalLink v-if="contact.channel !== 'phone'" :size="12" style="margin-left: 2px;" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -406,7 +501,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Sprout, Sparkles, Flame, Award, ShieldCheck, User, Lock,
-  Eye, EyeOff, ArrowRight, AlertCircle, KeyRound, Mail, CheckCircle2, RefreshCw
+  Eye, EyeOff, ArrowRight, AlertCircle, KeyRound, Mail, CheckCircle2, RefreshCw,
+  Headphones, MessageCircle, PhoneCall, ExternalLink, Clock, ChevronDown, ChevronUp, Send
 } from 'lucide-vue-next'
 import api from '@/api/client'
 import { getApiErrorMessage } from '@/utils/httpError'
@@ -428,6 +524,53 @@ const isFirstLogin = ref(false)
 const otpStep = ref('verify') // 'verify' | 'password'
 const otpCode = ref('')
 const otpVerificationToken = ref('')
+
+// Helper & Support contacts state
+const helperContacts = ref([])
+const helperLoading = ref(false)
+const isHelperOpen = ref(false)
+
+const fetchHelpers = async () => {
+  helperLoading.value = true
+  try {
+    const res = await api.get('/support/helpers')
+    helperContacts.value = res.data.helpers || []
+  } catch (err) {
+    console.error('Failed to load helpers', err)
+  } finally {
+    helperLoading.value = false
+  }
+}
+
+const getChannelLabel = (channel) => {
+  switch (channel) {
+    case 'whatsapp': return 'WhatsApp'
+    case 'email': return 'Email Support'
+    case 'phone': return 'Hotline Telepon'
+    case 'telegram': return 'Telegram'
+    default: return 'Kontak'
+  }
+}
+
+const getContactLink = (contact) => {
+  if (contact.channel === 'whatsapp') {
+    const digits = (contact.contact_value || '').replace(/\D/g, '')
+    const phone = digits.startsWith('0') ? '62' + digits.slice(1) : digits
+    return `https://wa.me/${phone}?text=Halo%20Admin%20GrowHub,%20saya%20membutuhkan%20bantuan%20terkait%20akun%20login%20saya.`
+  }
+  if (contact.channel === 'email') {
+    return `mailto:${contact.contact_value}?subject=Bantuan%20Akun%20GrowHub`
+  }
+  if (contact.channel === 'phone') {
+    const digits = (contact.contact_value || '').replace(/[^\d+]/g, '')
+    return `tel:${digits}`
+  }
+  if (contact.channel === 'telegram') {
+    const clean = (contact.contact_value || '').replace('@', '').trim()
+    return `https://t.me/${clean}`
+  }
+  return '#'
+}
 const maskedEmail = ref('')
 const otpSending = ref(false)
 const otpSent = ref(false)
@@ -541,6 +684,7 @@ const handleVerifyOtp = async () => {
 }
 
 onMounted(() => {
+  fetchHelpers()
   if (authStore.isAuthenticated && authStore.user?.must_change_password) {
     isFirstLogin.value = true
     resetFirstLoginState()

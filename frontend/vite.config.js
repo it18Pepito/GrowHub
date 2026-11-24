@@ -28,7 +28,7 @@ function createBackendProxy(target) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '')
-  const backendTarget = env.VITE_BACKEND_URL || 'http://127.0.0.1:8001'
+  const backendTarget = env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
   return {
     plugins: [vue()],

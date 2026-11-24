@@ -40,18 +40,20 @@ class AdminPolicyConfigController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'description' => ['required', 'string', 'max:1000'],
+            'point_deduction' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'severity' => ['nullable', 'string', 'in:low,medium,high'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:1000'],
         ]);
 
-        $validated['point_deduction'] = 1;
-        $validated['severity'] = 'medium';
+        $validated['point_deduction'] = max(1, (int) ($validated['point_deduction'] ?? 1));
+        $validated['severity'] = $validated['severity'] ?? 'medium';
         $validated['is_active'] = true;
         $validated['sort_order'] = $validated['sort_order'] ?? ((int) EthicsPolicy::max('sort_order') + 1);
 
         $policy = EthicsPolicy::create($validated);
 
         return response()->json(array_merge([
-            'message' => "Aturan pelanggaran \"{$policy->title}\" berhasil ditambahkan.",
+            'message' => "Aturan pelanggaran \"{$policy->title}\" (Sanksi: -{$policy->point_deduction} Pts) berhasil ditambahkan.",
             'policy' => $policy,
         ], $this->buildPayload()), 201);
     }
@@ -64,15 +66,22 @@ class AdminPolicyConfigController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'description' => ['required', 'string', 'max:1000'],
+            'point_deduction' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'severity' => ['nullable', 'string', 'in:low,medium,high'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:1000'],
         ]);
 
-        $validated['point_deduction'] = 1;
+        if (array_key_exists('point_deduction', $validated)) {
+            $validated['point_deduction'] = max(1, (int) $validated['point_deduction']);
+        }
+        if (array_key_exists('severity', $validated)) {
+            $validated['severity'] = $validated['severity'] ?: 'medium';
+        }
         $validated['is_active'] = true;
         $ethicsPolicy->update($validated);
 
         return response()->json(array_merge([
-            'message' => "Aturan pelanggaran \"{$ethicsPolicy->title}\" berhasil diperbarui.",
+            'message' => "Aturan pelanggaran \"{$ethicsPolicy->title}\" (Sanksi: -{$ethicsPolicy->point_deduction} Pts) berhasil diperbarui.",
             'policy' => $ethicsPolicy->fresh(),
         ], $this->buildPayload()));
     }
@@ -87,6 +96,8 @@ class AdminPolicyConfigController extends Controller
             'policies.*.id' => ['required', 'integer', 'exists:ethics_policies,id'],
             'policies.*.title' => ['required', 'string', 'max:160'],
             'policies.*.description' => ['required', 'string', 'max:1000'],
+            'policies.*.point_deduction' => ['required', 'integer', 'min:1', 'max:10000'],
+            'policies.*.severity' => ['nullable', 'string', 'in:low,medium,high'],
             'policies.*.sort_order' => ['required', 'integer', 'min:0', 'max:1000'],
         ]);
 
@@ -95,7 +106,8 @@ class AdminPolicyConfigController extends Controller
                 EthicsPolicy::where('id', $item['id'])->update([
                     'title' => $item['title'],
                     'description' => $item['description'],
-                    'point_deduction' => 1,
+                    'point_deduction' => max(1, (int) $item['point_deduction']),
+                    'severity' => $item['severity'] ?? 'medium',
                     'is_active' => true,
                     'sort_order' => $item['sort_order'],
                     'updated_at' => now(),
@@ -104,7 +116,7 @@ class AdminPolicyConfigController extends Controller
         });
 
         return response()->json(array_merge([
-            'message' => 'Semua konfigurasi Policy & Validation berhasil disimpan.',
+            'message' => 'Semua konfigurasi Policy & Sanksi Poin berhasil disimpan.',
         ], $this->buildPayload()));
     }
 
@@ -133,11 +145,20 @@ class AdminPolicyConfigController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
+        $minDeduction = (int) ($policies->min('point_deduction') ?: 1);
+        $maxDeduction = (int) ($policies->max('point_deduction') ?: 1);
+        $avgDeduction = round((float) ($policies->avg('point_deduction') ?: 1), 1);
+
         return [
             'policies' => $policies,
             'stats' => [
                 'total_policies' => $policies->count(),
-                'default_deduction' => 1,
+                'min_deduction' => $minDeduction,
+                'max_deduction' => $maxDeduction,
+                'avg_deduction' => $avgDeduction,
+                'deduction_range' => $minDeduction === $maxDeduction
+                    ? "-{$minDeduction} Pts"
+                    : "-{$minDeduction} s/d -{$maxDeduction} Pts",
             ],
         ];
     }
