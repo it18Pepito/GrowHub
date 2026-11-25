@@ -13,7 +13,7 @@
                     <tr>
                         <td style="background:linear-gradient(135deg, #142c14 0%, #1e8c45 100%); padding:24px 28px; color:#ffffff;">
                             <div style="font-size:22px; font-weight:800; letter-spacing:-0.02em;">GrowHub</div>
-                            <div style="font-size:12px; opacity:0.88; margin-top:4px; letter-spacing:0.04em; text-transform:uppercase;">Ramayana &amp; Co Learning Hub</div>
+                            <div style="font-size:12px; opacity:0.88; margin-top:4px; letter-spacing:0.04em; text-transform:uppercase;">Qirin &amp; Co Learning Hub</div>
                         </td>
                     </tr>
                     <tr>
