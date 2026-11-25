@@ -290,6 +290,7 @@ import {
   Eye, EyeOff, Save, CheckCircle2, AlertTriangle, HelpCircle
 } from 'lucide-vue-next'
 import api from '@/api/client'
+import { getApiErrorMessage } from '@/utils/httpError'
 import { useToastStore } from '@/stores/toast'
 import { useAuthStore } from '@/stores/auth'
 
@@ -317,8 +318,9 @@ const testEmail = ref('')
 const testResult = ref(null)
 
 const applySettings = (data) => {
-  if (!data) return
+  if (!data || typeof data !== 'object') return
   const s = data.setting || data
+  if (!s || typeof s !== 'object') return
   form.mail_mailer = s.mail_mailer ?? 'smtp'
   form.mail_scheme = s.mail_scheme ?? 'smtps'
   form.mail_host = s.mail_host ?? 'smtp-1.rcoid.com'
@@ -335,12 +337,14 @@ const fetchSettings = async () => {
   testResult.value = null
   try {
     const res = await api.get('/admin/mail-settings')
-    applySettings(res.data)
+    if (res.data && typeof res.data === 'object') {
+      applySettings(res.data)
+    }
     if (!testEmail.value && authStore.user?.email) {
       testEmail.value = authStore.user.email
     }
   } catch (err) {
-    toastStore.error(err.response?.data?.message || 'Gagal memuat konfigurasi email.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal memuat konfigurasi email.'))
   } finally {
     loading.value = false
   }
@@ -364,10 +368,12 @@ const saveSettings = async () => {
     }
 
     const res = await api.put('/admin/mail-settings', payload)
-    applySettings(res.data)
-    toastStore.success(res.data.message || 'Konfigurasi email & SMTP berhasil disimpan.')
+    if (res.data && typeof res.data === 'object') {
+      applySettings(res.data)
+    }
+    toastStore.success(res.data?.message || 'Konfigurasi email & SMTP berhasil disimpan.')
   } catch (err) {
-    toastStore.error(err.response?.data?.message || 'Gagal menyimpan konfigurasi email.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal menyimpan konfigurasi email.'))
   } finally {
     saving.value = false
   }
@@ -389,11 +395,11 @@ const sendTestEmail = async () => {
 
     testResult.value = {
       success: true,
-      message: res.data.message || 'Email uji coba berhasil dikirim ke ' + testEmail.value,
+      message: res.data?.message || 'Email uji coba berhasil dikirim ke ' + testEmail.value,
     }
-    toastStore.success(res.data.message || 'Email uji coba berhasil dikirim.')
+    toastStore.success(res.data?.message || 'Email uji coba berhasil dikirim.')
   } catch (err) {
-    const errMsg = err.response?.data?.message || err.response?.data?.error || 'Gagal mengirim email uji coba.'
+    const errMsg = getApiErrorMessage(err, 'Gagal mengirim email uji coba.')
     testResult.value = {
       success: false,
       message: errMsg,

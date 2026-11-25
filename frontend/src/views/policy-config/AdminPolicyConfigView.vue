@@ -305,6 +305,7 @@ import {
   TrendingDown, Trash2, X
 } from 'lucide-vue-next'
 import api from '@/api/client'
+import { getApiErrorMessage } from '@/utils/httpError'
 import { useToastStore } from '@/stores/toast'
 import EthicsNoticeModal from '@/components/common/EthicsNoticeModal.vue'
 
@@ -373,9 +374,11 @@ const fetchPolicies = async () => {
   loading.value = true
   try {
     const res = await api.get('/admin/policy-configs')
-    applyPayload(res.data)
+    if (res.data && typeof res.data === 'object') {
+      applyPayload(res.data)
+    }
   } catch (err) {
-    toastStore.error('Gagal memuat konfigurasi Policy & Validation.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal memuat konfigurasi Policy & Validation.'))
   } finally {
     loading.value = false
   }

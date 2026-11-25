@@ -354,6 +354,7 @@ import {
   MessageCircle, Mail, PhoneCall, Send, Pencil, Trash2, X
 } from 'lucide-vue-next'
 import api from '@/api/client'
+import { getApiErrorMessage } from '@/utils/httpError'
 import { useToastStore } from '@/stores/toast'
 
 const toastStore = useToastStore()
@@ -411,17 +412,20 @@ const getContactHint = (channel) => {
 }
 
 const applyPayload = (data) => {
-  helpers.value = data.helpers || []
-  stats.value = data.stats || {}
+  if (!data || typeof data !== 'object') return
+  helpers.value = Array.isArray(data.helpers) ? data.helpers : []
+  stats.value = (data.stats && typeof data.stats === 'object') ? data.stats : {}
 }
 
 const fetchHelpers = async () => {
   loading.value = true
   try {
     const res = await api.get('/admin/helper-contacts')
-    applyPayload(res.data)
+    if (res.data && typeof res.data === 'object') {
+      applyPayload(res.data)
+    }
   } catch (err) {
-    toastStore.error('Gagal memuat daftar kontak helper.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal memuat daftar kontak helper.'))
   } finally {
     loading.value = false
   }
@@ -476,16 +480,16 @@ const submitForm = async () => {
 
     if (isEditing.value) {
       const res = await api.put(`/admin/helper-contacts/${editId.value}`, payload)
-      applyPayload(res.data)
-      toastStore.success(res.data.message || 'Kontak berhasil diperbarui.')
+      if (res.data && typeof res.data === 'object') applyPayload(res.data)
+      toastStore.success(res.data?.message || 'Kontak berhasil diperbarui.')
     } else {
       const res = await api.post('/admin/helper-contacts', payload)
-      applyPayload(res.data)
-      toastStore.success(res.data.message || 'Kontak baru ditambahkan.')
+      if (res.data && typeof res.data === 'object') applyPayload(res.data)
+      toastStore.success(res.data?.message || 'Kontak baru ditambahkan.')
     }
     modalOpen.value = false
   } catch (err) {
-    toastStore.error(err.response?.data?.message || 'Gagal menyimpan kontak helper.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal menyimpan kontak helper.'))
   } finally {
     saving.value = false
   }
@@ -495,10 +499,10 @@ const toggleActive = async (c) => {
   saving.value = true
   try {
     const res = await api.post(`/admin/helper-contacts/${c.id}/toggle`)
-    applyPayload(res.data)
-    toastStore.success(res.data.message || 'Status kontak diperbarui.')
+    if (res.data && typeof res.data === 'object') applyPayload(res.data)
+    toastStore.success(res.data?.message || 'Status kontak diperbarui.')
   } catch (err) {
-    toastStore.error(err.response?.data?.message || 'Gagal mengubah status kontak.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal mengubah status kontak.'))
   } finally {
     saving.value = false
   }
@@ -513,11 +517,11 @@ const executeDelete = async () => {
   saving.value = true
   try {
     const res = await api.delete(`/admin/helper-contacts/${deleteTarget.value.id}`)
-    applyPayload(res.data)
+    if (res.data && typeof res.data === 'object') applyPayload(res.data)
     deleteTarget.value = null
-    toastStore.success(res.data.message || 'Kontak dihapus.')
+    toastStore.success(res.data?.message || 'Kontak dihapus.')
   } catch (err) {
-    toastStore.error(err.response?.data?.message || 'Gagal menghapus kontak.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal menghapus kontak.'))
   } finally {
     saving.value = false
   }
@@ -531,11 +535,11 @@ const executeReset = async () => {
   saving.value = true
   try {
     const res = await api.post('/admin/helper-contacts/reset-defaults')
-    applyPayload(res.data)
+    if (res.data && typeof res.data === 'object') applyPayload(res.data)
     resetModalOpen.value = false
-    toastStore.success(res.data.message || 'Kontak direset ke default.')
+    toastStore.success(res.data?.message || 'Kontak direset ke default.')
   } catch (err) {
-    toastStore.error('Gagal mereset kontak helper.')
+    toastStore.error(getApiErrorMessage(err, 'Gagal mereset kontak helper.'))
   } finally {
     saving.value = false
   }
