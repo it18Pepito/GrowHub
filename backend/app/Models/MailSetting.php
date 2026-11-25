@@ -60,6 +60,14 @@ class MailSetting extends Model
             'mail.mailers.smtp.port' => (int) $this->mail_port,
             'mail.mailers.smtp.username' => $this->mail_username,
             'mail.mailers.smtp.password' => $this->mail_password,
+            'mail.mailers.smtp.verify_peer' => false,
+            'mail.mailers.smtp.stream' => [
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ],
+            ],
             'mail.from.address' => $this->mail_from_address,
             'mail.from.name' => $this->mail_from_name,
         ]);

@@ -144,7 +144,14 @@ class AdminMailSettingController extends Controller
 
         $adminUser = $request->user();
         $testedBy = $adminUser ? "{$adminUser->name} (NIP: {$adminUser->nip})" : 'Administrator';
-        $testedAt = now()->translatedFormat('d F Y, H:i:s').' WIB';
+        
+        $tz = config('app.timezone', 'Asia/Makassar');
+        $tzAbbr = match ($tz) {
+            'Asia/Jakarta' => 'WIB',
+            'Asia/Jayapura' => 'WIT',
+            default => 'WITA',
+        };
+        $testedAt = now()->setTimezone($tz)->locale('id')->translatedFormat('d F Y, H:i:s')." {$tzAbbr}";
 
         $smtpDetails = [
             'mailer' => $setting->mail_mailer,
