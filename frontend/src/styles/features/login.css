@@ -537,7 +537,7 @@
 }
 
 /* ==========================================================================
-   Helper & Support Contacts Box (Login Page)
+   Helper & Support Contacts Flying Button & Popup Modal (Login Page)
    ========================================================================== */
 
 .btn-helper-link {
@@ -560,89 +560,219 @@
   background: var(--green-50, #edf8f1);
 }
 
-.login-helper-card {
-  margin-top: 16px;
+/* Flying Floating Action Button (FAB) */
+.flying-helper-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--primary, #1e8c45) 0%, #157336 100%);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(30, 140, 69, 0.38), 0 2px 6px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.flying-helper-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(30, 140, 69, 0.48), 0 4px 10px rgba(0, 0, 0, 0.16);
+  background: linear-gradient(135deg, #239e4f 0%, #17803c 100%);
+}
+
+.flying-helper-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.flying-helper-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flying-helper-pulse {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  background-color: #4ade80;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+  animation: helperPulse 2s infinite;
+}
+
+@keyframes helperPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.8);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+.flying-helper-label {
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .flying-helper-btn {
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Helper Contacts Modal Popup */
+.helper-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.helper-modal {
   background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.login-helper-card:hover {
-  border-color: #cbd5e1;
-}
-
-.login-helper-toggle {
+  border-radius: 20px;
   width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.helper-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.helper-head-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.helper-head-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--green-50, #edf8f1);
+  color: var(--primary, #1e8c45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(30, 140, 69, 0.15);
+}
+
+.helper-modal-head .modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dark);
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.helper-modal-head .modal-subtitle {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.btn-close-modal {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-close-modal:hover {
+  background: #e2e8f0;
+  color: var(--dark);
+}
+
+.helper-modal-body {
+  padding: 18px 24px;
+  overflow-y: auto;
+  max-height: calc(88vh - 150px);
+}
+
+.helper-empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.helper-modal-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
-  background: #f8faf8;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.2s;
+  padding: 14px 24px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border);
 }
 
-.login-helper-toggle:hover {
-  background: #f1f5f2;
-}
-
-.helper-toggle-left {
+.helper-foot-note {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.helper-icon-bubble {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #e8f5ed;
-  color: var(--primary);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-
-.helper-toggle-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.helper-toggle-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--dark);
-}
-
-.helper-toggle-sub {
-  font-size: 11.5px;
+  gap: 6px;
   color: var(--text-3);
-  margin-top: 1px;
-}
-
-.helper-chevron {
-  color: var(--text-3);
-  transition: transform 0.25s ease;
-  flex-shrink: 0;
-}
-
-.helper-chevron.is-flipped {
-  transform: rotate(180deg);
-}
-
-.login-helper-content {
-  padding: 14px 16px 16px;
-  background: #ffffff;
-  border-top: 1px solid var(--border);
-  animation: fadeIn 0.25s ease;
+  font-size: 12px;
 }
 
 .helper-contacts-list {

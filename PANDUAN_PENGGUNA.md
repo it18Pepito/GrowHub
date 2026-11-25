@@ -438,7 +438,7 @@ Diakses melalui menu **"Policy and Validation Config"** (`/admin/policy-config`)
 Diakses melalui menu samping Administrator **"Helper Contacts"** (`/admin/helper-contacts`) atau melalui tombol **"Kelola Kontak Helper"** di halaman Help & Support:
 * **Fungsi Utama:** Mengelola saluran bantuan resmi (Helpdesk IT, Human Capital Care, Hotline Darurat) yang dapat dihubungi karyawan.
 * **Tampil Otomatis di Halaman Login & Support:** Setiap kontak dengan status **Aktif** akan otomatis ditampilkan di:
-  1. **Halaman Login (`/login`):** Pada kotak bantuan *"Butuh Bantuan Login / Kendala Akun?"* sehingga karyawan yang lupa password atau belum menerima OTP dapat langsung menghubungi kontak bantuan via WhatsApp, Email, atau Telepon tanpa harus bisa login terlebih dahulu.
+  1. **Halaman Login (`/login`):** Tersedia tombol melayang (*Flying Button / FAB*) berikon headphone di sudut kanan bawah layar di luar kartu login. Saat diklik, tombol ini menampilkan jendela pop-up modal *Pusat Bantuan & Kontak Helper* sehingga karyawan yang lupa password, akun terkunci, atau belum menerima OTP dapat langsung menghubungi kontak bantuan resmi via WhatsApp, Email, Telepon, atau Telegram tanpa harus login terlebih dahulu.
   2. **Halaman Help & Support (`/help`):** Ditampilkan sebagai kartu kontak bantuan resmi berfitur tombol aksi langsung (*Chat WhatsApp*, *Kirim Email*, *Hubungi Telepon*).
 * **Fitur Manajemen Admin:**
   - **Tambah Kontak Helper:** Masukkan nama layanan/PIC, jabatan, jenis saluran (*WhatsApp*, *Email*, *Telepon*, *Telegram*), nomor/alamat kontak, jam operasional, dan keterangan bantuan.
